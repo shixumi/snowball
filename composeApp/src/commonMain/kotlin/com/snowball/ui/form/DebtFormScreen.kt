@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +52,17 @@ import com.snowball.ui.theme.SnowColors
 @Composable
 fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> Unit) {
     val state = vm.state
+
+    var nameTouched by remember { mutableStateOf(false) }
+    var nameHadFocus by remember { mutableStateOf(false) }
+    var amountTouched by remember { mutableStateOf(false) }
+    var amountHadFocus by remember { mutableStateOf(false) }
+    var totalTouched by remember { mutableStateOf(false) }
+    var totalHadFocus by remember { mutableStateOf(false) }
+    var dueDayTouched by remember { mutableStateOf(false) }
+    var dueDayHadFocus by remember { mutableStateOf(false) }
+    var alreadyMadeTouched by remember { mutableStateOf(false) }
+    var alreadyMadeHadFocus by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = SnowColors.Night,
@@ -83,6 +95,7 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
             Surface(color = SnowColors.Night) {
                 Button(
                     onClick = { if (vm.save()) onSaved() },
+                    enabled = vm.isValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
@@ -109,7 +122,19 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = { v -> vm.update { it.copy(name = v) } },
-                    modifier = Modifier.fillMaxWidth(),
+                    isError = nameTouched && !state.isNameValid(),
+                    supportingText = {
+                        if (nameTouched && !state.isNameValid()) Text("Enter a name", color = SnowColors.Ember)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focus ->
+                            if (focus.isFocused) {
+                                nameHadFocus = true
+                            } else if (nameHadFocus) {
+                                nameTouched = true
+                            }
+                        },
                     colors = textFieldColors(),
                     shape = RoundedCornerShape(12.dp),
                 )
@@ -124,7 +149,19 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                     value = state.monthlyAmount,
                     onValueChange = { v -> vm.update { it.copy(monthlyAmount = v.filter { c -> c.isDigit() || c == '.' }) } },
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
+                    isError = amountTouched && !state.isMonthlyAmountValid(),
+                    supportingText = {
+                        if (amountTouched && !state.isMonthlyAmountValid()) Text("Enter an amount greater than 0", color = SnowColors.Ember)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focus ->
+                            if (focus.isFocused) {
+                                amountHadFocus = true
+                            } else if (amountHadFocus) {
+                                amountTouched = true
+                            }
+                        },
                     colors = textFieldColors(),
                     shape = RoundedCornerShape(12.dp),
                 )
@@ -137,7 +174,19 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                         value = state.totalPayments,
                         onValueChange = { v -> vm.update { it.copy(totalPayments = v.filter { c -> c.isDigit() }) } },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
+                        isError = totalTouched && !state.isTotalPaymentsValid(),
+                        supportingText = {
+                            if (totalTouched && !state.isTotalPaymentsValid()) Text("1 to 600", color = SnowColors.Ember)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focus ->
+                                if (focus.isFocused) {
+                                    totalHadFocus = true
+                                } else if (totalHadFocus) {
+                                    totalTouched = true
+                                }
+                            },
                         colors = textFieldColors(),
                         shape = RoundedCornerShape(12.dp),
                     )
@@ -147,7 +196,19 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                         value = state.dueDay,
                         onValueChange = { v -> vm.update { it.copy(dueDay = v.filter { c -> c.isDigit() }) } },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
+                        isError = dueDayTouched && !state.isDueDayValid(),
+                        supportingText = {
+                            if (dueDayTouched && !state.isDueDayValid()) Text("1 to 31", color = SnowColors.Ember)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focus ->
+                                if (focus.isFocused) {
+                                    dueDayHadFocus = true
+                                } else if (dueDayHadFocus) {
+                                    dueDayTouched = true
+                                }
+                            },
                         colors = textFieldColors(),
                         shape = RoundedCornerShape(12.dp),
                     )
@@ -162,7 +223,19 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                         onValueChange = { v -> vm.update { it.copy(paymentsAlreadyMade = v.filter { c -> c.isDigit() }) } },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
                         placeholder = { Text("0", color = SnowColors.FrostDim) },
-                        modifier = Modifier.fillMaxWidth(),
+                        isError = alreadyMadeTouched && !state.isPaymentsAlreadyMadeValid(),
+                        supportingText = {
+                            if (alreadyMadeTouched && !state.isPaymentsAlreadyMadeValid()) Text("Must be between 0 and total payments", color = SnowColors.Ember)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focus ->
+                                if (focus.isFocused) {
+                                    alreadyMadeHadFocus = true
+                                } else if (alreadyMadeHadFocus) {
+                                    alreadyMadeTouched = true
+                                }
+                            },
                         colors = textFieldColors(),
                         shape = RoundedCornerShape(12.dp),
                     )
