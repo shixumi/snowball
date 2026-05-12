@@ -1,7 +1,12 @@
 package com.snowball.ui.debts
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +45,9 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.components.PesoText
+import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.icon
+import com.snowball.ui.components.pressScale
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.formatLongDate
@@ -85,13 +93,17 @@ fun DebtsScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            var rowIndex = 0
             state.categories.forEach { cat ->
                 val rows = state.scheduledByCategory[cat.id].orEmpty()
                 if (rows.isEmpty()) return@forEach
                 CategoryHeader(cat = cat)
                 Spacer(Modifier.height(8.dp))
                 rows.forEach { row ->
-                    DebtRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
+                    val idx = rowIndex++
+                    StaggeredItem(index = idx) {
+                        DebtRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
                 Spacer(Modifier.height(16.dp))
@@ -102,34 +114,46 @@ fun DebtsScreen(
                 if (miscCat != null) CategoryHeader(cat = miscCat)
                 Spacer(Modifier.height(8.dp))
                 state.miscRows.forEach { row ->
-                    MiscRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
+                    val idx = rowIndex++
+                    StaggeredItem(index = idx) {
+                        MiscRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
                 Spacer(Modifier.height(16.dp))
             }
 
             if (state.scheduledByCategory.isEmpty() && state.miscRows.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(40.dp),
-                    contentAlignment = Alignment.Center,
+                var emptyStateVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { emptyStateVisible = true }
+                AnimatedVisibility(
+                    visible = emptyStateVisible,
+                    enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 },
                 ) {
-                    Text(
-                        if (state.showArchived) "Nothing archived yet."
-                        else "No debts yet. Tap + to add your first.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = SnowColors.FrostDim,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(40.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            if (state.showArchived) "Nothing archived yet."
+                            else "No debts yet. Tap + to add your first.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SnowColors.FrostDim,
+                        )
+                    }
                 }
             }
         }
 
         if (!state.showArchived) {
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
+                val fabInteractionSource = remember { MutableInteractionSource() }
                 FloatingActionButton(
                     onClick = { fabExpanded = true },
-                    modifier = Modifier.size(56.dp).clip(CircleShape),
+                    modifier = Modifier.size(56.dp).clip(CircleShape).pressScale(fabInteractionSource),
                     containerColor = SnowColors.Ice,
                     contentColor = SnowColors.Night,
+                    interactionSource = fabInteractionSource,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Add,

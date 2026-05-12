@@ -47,6 +47,7 @@ import com.snowball.data.model.CategoryBehavior
 import com.snowball.data.model.Payment
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
+import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
@@ -157,124 +158,140 @@ fun DebtDetailScreen(
 
             if (isMisc) {
                 // MISC variant: big amount + paid date + notes
-                PesoText(
-                    amount = state.debt.monthlyAmount,
-                    style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.W300),
-                    pesoColor = SnowColors.FrostMute,
-                    numberColor = SnowColors.Frost,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "Paid ${formatLongDate(state.debt.startDate)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SnowColors.FrostMute,
-                )
+                StaggeredItem(index = 0) {
+                    Column {
+                        PesoText(
+                            amount = state.debt.monthlyAmount,
+                            style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.W300),
+                            pesoColor = SnowColors.FrostMute,
+                            numberColor = SnowColors.Frost,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Paid ${formatLongDate(state.debt.startDate)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SnowColors.FrostMute,
+                        )
+                    }
+                }
                 val notes = state.debt.notes
                 if (!notes.isNullOrBlank()) {
                     Spacer(Modifier.height(24.dp))
-                    Text(
-                        "NOTES",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                        color = SnowColors.FrostDim,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        notes,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = SnowColors.Frost,
-                    )
+                    StaggeredItem(index = 1) {
+                        Column {
+                            Text(
+                                "NOTES",
+                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                                color = SnowColors.FrostDim,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                notes,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = SnowColors.Frost,
+                            )
+                        }
+                    }
                 }
             } else {
                 // Scheduled variant: ProgressArc + amount left + stats + history
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        ProgressArc(
-                            progress = if (state.debt.totalPayments > 0) state.paymentsMade.toFloat() / state.debt.totalPayments else 0f,
-                            modifier = Modifier.size(160.dp),
-                        )
-                        Text(
-                            "${state.paymentsMade} of ${state.debt.totalPayments}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = SnowColors.Frost,
-                        )
+                StaggeredItem(index = 0) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                ProgressArc(
+                                    progress = if (state.debt.totalPayments > 0) state.paymentsMade.toFloat() / state.debt.totalPayments else 0f,
+                                    modifier = Modifier.size(160.dp),
+                                )
+                                Text(
+                                    "${state.paymentsMade} of ${state.debt.totalPayments}",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = SnowColors.Frost,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text("₱", color = SnowColors.FrostMute, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                formatAmountWithSeparators(state.amountLeft),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = SnowColors.Frost,
+                            )
+                            Text(" left", color = SnowColors.FrostMute, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
-                }
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Text("₱", color = SnowColors.FrostMute, style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        formatAmountWithSeparators(state.amountLeft),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = SnowColors.Frost,
-                    )
-                    Text(" left", color = SnowColors.FrostMute, style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Spacer(Modifier.height(24.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(SnowColors.LineStrong),
-                )
-                Spacer(Modifier.height(20.dp))
-
-                StatRow(label = "MONTHLY", value = "₱${formatAmountWithSeparators(state.debt.monthlyAmount)}")
-                Spacer(Modifier.height(12.dp))
-                StatRow(
-                    label = "DUE DAY",
-                    value = state.debt.dueDay.toString() + if (state.debt.useLastDayOfMonth) " (or last day)" else "",
-                )
-                Spacer(Modifier.height(12.dp))
-                StatRow(label = "STARTED", value = formatLongDate(state.debt.startDate))
-                Spacer(Modifier.height(12.dp))
-                StatRow(label = "FIRST PAYMENT", value = formatLongDate(state.debt.firstPaymentDate))
-                Spacer(Modifier.height(12.dp))
-                StatRow(
-                    label = "PROJECTED END",
-                    value = state.projectedEndDate?.let { formatLongDate(it) } ?: "—",
-                )
-
-                state.overdue?.let { info ->
-                    Spacer(Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "OVERDUE",
-                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                            color = SnowColors.Ember,
-                            modifier = Modifier.weight(1f),
+                StaggeredItem(index = 1) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(SnowColors.LineStrong),
                         )
-                        Text(
-                            "${info.missedCycles} ${if (info.missedCycles == 1) "cycle" else "cycles"} · ₱${formatAmountWithSeparators(info.missedAmount)}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = SnowColors.Ember,
-                        )
-                    }
-                }
+                        Spacer(Modifier.height(20.dp))
 
-                if (state.payments.isNotEmpty()) {
-                    Spacer(Modifier.height(24.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(SnowColors.LineStrong),
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        "PAYMENT HISTORY (${state.payments.size})",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                        color = SnowColors.FrostDim,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    state.payments.forEach { payment ->
-                        PaymentHistoryRow(payment = payment, onClick = { pendingUndoPayment = payment })
+                        StatRow(label = "MONTHLY", value = "₱${formatAmountWithSeparators(state.debt.monthlyAmount)}")
+                        Spacer(Modifier.height(12.dp))
+                        StatRow(
+                            label = "DUE DAY",
+                            value = state.debt.dueDay.toString() + if (state.debt.useLastDayOfMonth) " (or last day)" else "",
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        StatRow(label = "STARTED", value = formatLongDate(state.debt.startDate))
+                        Spacer(Modifier.height(12.dp))
+                        StatRow(label = "FIRST PAYMENT", value = formatLongDate(state.debt.firstPaymentDate))
+                        Spacer(Modifier.height(12.dp))
+                        StatRow(
+                            label = "PROJECTED END",
+                            value = state.projectedEndDate?.let { formatLongDate(it) } ?: "—",
+                        )
+
+                        state.overdue?.let { info ->
+                            Spacer(Modifier.height(12.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "OVERDUE",
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                                    color = SnowColors.Ember,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    "${info.missedCycles} ${if (info.missedCycles == 1) "cycle" else "cycles"} · ₱${formatAmountWithSeparators(info.missedAmount)}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = SnowColors.Ember,
+                                )
+                            }
+                        }
+
+                        if (state.payments.isNotEmpty()) {
+                            Spacer(Modifier.height(24.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(SnowColors.LineStrong),
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            Text(
+                                "PAYMENT HISTORY (${state.payments.size})",
+                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                                color = SnowColors.FrostDim,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            state.payments.forEach { payment ->
+                                PaymentHistoryRow(payment = payment, onClick = { pendingUndoPayment = payment })
+                            }
+                        }
                     }
                 }
             }
