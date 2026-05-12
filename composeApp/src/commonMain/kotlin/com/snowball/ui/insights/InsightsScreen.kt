@@ -112,7 +112,7 @@ fun InsightsScreen(vm: InsightsViewModel) {
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            "No upcoming debts in your forecast window.",
+                            "Nothing on the horizon — you're caught up.",
                             style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
                             color = SnowColors.FrostDim,
                         )

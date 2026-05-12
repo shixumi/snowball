@@ -171,7 +171,7 @@ fun HomeScreen(vm: HomeViewModel) {
         Spacer(Modifier.height(8.dp))
         if (state.rows.isEmpty()) {
             val message = when {
-                state.income == 0.0 -> "Start by setting your income in Settings."
+                state.income == 0.0 -> "Set your income in Settings to get started."
                 else -> "No payments due this cutoff yet.\nAdd debts from the Debts tab."
             }
             var emptyVisible by remember { mutableStateOf(false) }

@@ -147,8 +147,8 @@ fun DebtsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            if (state.showArchived) "Nothing archived yet."
-                            else "No debts yet. Tap + to add your first.",
+                            if (state.showArchived) "No archived debts yet."
+                            else "No debts yet — tap ＋ to add your first.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = SnowColors.FrostDim,
                         )

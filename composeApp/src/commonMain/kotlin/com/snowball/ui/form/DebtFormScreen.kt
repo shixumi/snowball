@@ -224,7 +224,7 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
                             isError = totalTouched && !state.isTotalPaymentsValid(),
                             supportingText = {
-                                if (totalTouched && !state.isTotalPaymentsValid()) Text("1 to 600", color = SnowColors.Ember)
+                                if (totalTouched && !state.isTotalPaymentsValid()) Text("Enter 1 to 600", color = SnowColors.Ember)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -246,7 +246,7 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
                             isError = dueDayTouched && !state.isDueDayValid(),
                             supportingText = {
-                                if (dueDayTouched && !state.isDueDayValid()) Text("1 to 31", color = SnowColors.Ember)
+                                if (dueDayTouched && !state.isDueDayValid()) Text("Enter 1 to 31", color = SnowColors.Ember)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
