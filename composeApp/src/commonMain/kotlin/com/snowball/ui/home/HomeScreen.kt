@@ -1,6 +1,7 @@
 package com.snowball.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Undo
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -25,6 +30,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -44,17 +51,29 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.domain.DueRow
+import com.snowball.domain.OverdueInfo
 import com.snowball.ui.components.CutoffCard
 import com.snowball.ui.components.JourneyCard
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
 import com.snowball.ui.components.UpNextCard
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.formatAmountWithSeparators
+import com.snowball.ui.util.formatLongDate
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
     var tick by remember { mutableStateOf(0) }
     val state = remember(tick) { vm.load() }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            tick++
+        }
+    }
+
+    var pendingCatchUp by remember { mutableStateOf<OverdueInfo?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -75,6 +94,34 @@ fun HomeScreen(vm: HomeViewModel) {
                 isExpanded = upNextExpanded,
                 onToggle = { upNextExpanded = !upNextExpanded },
             )
+        }
+
+        if (state.overdue.isNotEmpty()) {
+            Spacer(Modifier.height(24.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(SnowColors.NightElev)
+                    .border(1.dp, SnowColors.Ember.copy(alpha = 0.4f), RoundedCornerShape(28.dp))
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+            ) {
+                Text(
+                    "OVERDUE",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                    color = SnowColors.Ember,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Tap to mark caught up",
+                    style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                    color = SnowColors.FrostMute,
+                )
+                Spacer(Modifier.height(12.dp))
+                state.overdue.forEach { info ->
+                    OverdueRow(info = info, onClick = { pendingCatchUp = info })
+                }
+            }
         }
 
         Spacer(Modifier.height(24.dp))
@@ -114,6 +161,39 @@ fun HomeScreen(vm: HomeViewModel) {
             Spacer(Modifier.height(24.dp))
             JourneyCard(stats = state.journey)
         }
+    }
+
+    val catchUpTarget = pendingCatchUp
+    if (catchUpTarget != null) {
+        AlertDialog(
+            onDismissRequest = { pendingCatchUp = null },
+            title = {
+                Text(
+                    "Catch up on ${catchUpTarget.debt.name}?",
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            },
+            text = {
+                Text(
+                    "Records ${catchUpTarget.missedCycles} missed payment${if (catchUpTarget.missedCycles == 1) "" else "s"} totaling ₱${formatAmountWithSeparators(catchUpTarget.missedAmount)}. First missed due date: ${formatLongDate(catchUpTarget.firstMissedDueDate)}."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.catchUpOverdue(catchUpTarget)
+                    pendingCatchUp = null
+                    tick++
+                }) { Text("Catch up", color = SnowColors.Ember) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingCatchUp = null }) {
+                    Text("Cancel", color = SnowColors.FrostMute)
+                }
+            },
+            containerColor = SnowColors.CardElev,
+            titleContentColor = SnowColors.Frost,
+            textContentColor = SnowColors.FrostMute,
+        )
     }
 }
 
@@ -275,6 +355,39 @@ private fun EmptyHint(message: String) {
             message,
             style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
             color = SnowColors.FrostDim,
+        )
+    }
+}
+
+@Composable
+private fun OverdueRow(info: OverdueInfo, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.WarningAmber,
+            contentDescription = null,
+            tint = SnowColors.Ember,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(info.debt.name, style = MaterialTheme.typography.bodyLarge, color = SnowColors.Frost)
+            Text(
+                "${info.missedCycles} ${if (info.missedCycles == 1) "cycle" else "cycles"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
+            )
+        }
+        Text(
+            "₱${formatAmountWithSeparators(info.missedAmount)}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = SnowColors.Ember,
         )
     }
 }
