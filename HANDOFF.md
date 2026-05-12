@@ -1,103 +1,144 @@
 # HANDOFF — Snowball
 
-Resume notes after a session died on `API Error: 400 Could not process image`.
+Resume notes for picking up the project in a new session.
 
-Failed transcript: `C:\Users\Pika\.claude\projects\C--Users-Pika-projects-snowball\826c9af7-02fb-4d81-98a1-0f444df0d973.jsonl` (line 1213 dispatch → line 1217 first crash; main agent then poisoned and unresponsive from line 1224 onward).
+## What is this
 
-## Goal
+**Snowball** — a personal debt tracker for Android (Compose Multiplatform / Kotlin Multiplatform). Replaces a Google Sheet for tracking debts paid bi-monthly on 15th and 30th paydays. Currency is PHP (locked for v1). Theme is "Editorial Frost" — navy `#0B0F14` background, champagne and ice-blue accents, Fraunces (display) + DM Sans (body).
 
-Build **Snowball** — a personal debt tracker for Android (Compose Multiplatform / Kotlin Multiplatform). Replaces user's Google Sheet for tracking debts and bi-monthly payments (15th and 30th cutoffs). v0.1 = working app on emulator + S25; v0.2 reserved for snowball-history visualization.
+- **Repo:** `https://github.com/shixumi/snowball` (private; user `shixumi`)
+- **Working tree:** keep clean unless mid-task
+- **Branch:** `main`
+- **Current tag:** `v0.2.10`
 
-## What's been done (all committed and pushed to `origin/main`)
+## Where things are
 
-Repo: `https://github.com/shixumi/snowball` (private; user `shixumi`). Working tree clean. v0.1 metrics: 35/35 plan tasks complete, 36/36 unit tests passing (7 test classes), debug APK 10.1 MB, release APK 7.5 MB unsigned. Tag `v0.1.0` pushed.
+```
+docs/
+├── design/
+│   └── ux-review-2026-05-12.md             ← independent UX/UI review from v0.1.0
+├── superpowers/
+│   ├── specs/                              ← brainstorming output, one per feature/sub-project
+│   │   ├── 2026-05-12-snowball-design.md          (v0.1 design)
+│   │   ├── 2026-05-12-snowball-v011-ux-polish-design.md
+│   │   ├── 2026-05-13-snowball-v02a-home-design.md   (Up next + Journey)
+│   │   ├── 2026-05-13-snowball-v02b-debt-detail-design.md
+│   │   ├── 2026-05-13-snowball-v02c-categories-design.md
+│   │   ├── 2026-05-13-snowball-v02d-rollover-design.md
+│   │   ├── 2026-05-13-snowball-insights-design.md
+│   │   └── 2026-05-13-snowball-animations-design.md
+│   └── plans/                              ← writing-plans output, one per spec
+│       └── (same dates, "-design" → -<feature>")
+└── setup/
+    └── android-dev-environment.md
+```
 
-Latest commits (newest first):
-- `bc1e7c7` — App icon (adaptive icon + Gemini-generated snowball PNG) + fix swipe-right undo stale closure via `rememberUpdatedState`
-- `b8935e6` — Swipe-to-toggle payments on Home (`SwipeToDismissBox`, haptic, directional gating, tap-fallback)
-- `3b8af76` — "Payments already made" field in DebtFormScreen — backfills synthetic Payment rows so users can import partially-paid debts
-- `3749cb3` / `656327e` — Form field editability fixes (observable state + start-date)
-- `a1808ec` — Bottom nav background extends through gesture-nav area
-- `f27bce7` — Icons in bottom nav + category badges
-- `1efd305` / `c12f0c4` — Settings: income-per-cutoff input + ViewModel
-- `be150ca` / `8419196` / `902a199` — Debts list (FAB + edit) + form + form VM
-- `ff371b9` / `643a718` — Home cutoff dashboard + hero card
+Source: `composeApp/src/commonMain/kotlin/com/snowball/`
+- `data/` — model + repos + db factory
+- `domain/` — pure calculators (Cutoff, Journey, Overdue, Insights)
+- `ui/components/` — shared composables (CutoffCard, PesoText, ProgressArc, UpNextCard, JourneyCard, IconCatalog, StaggeredItem)
+- `ui/home/` — HomeScreen + VM
+- `ui/debts/` — list + VM (now shows scheduled + MISC sections)
+- `ui/form/` — DebtFormScreen + VM (with validation, TopAppBar, dropdown)
+- `ui/detail/` — DebtDetailScreen + VM (Detail screen with progress arc + payment history)
+- `ui/misc/` — MISC item slim form
+- `ui/categories/` — Category Management (rename/icon/delete/reassign)
+- `ui/insights/` — Insights tab (snapshot + 12-cutoff forecast)
+- `ui/settings/` — SettingsScreen + VM
+- `ui/nav/` — BottomNav + SystemBackHandler expect/actual
+- `ui/util/` — AmountFormat, DateFormat
+- `ui/theme/` — Color, Type, Theme
+- `App.kt` — sealed `Route` + AnimatedContent route transitions
 
-Design intent and full spec/plan live in:
-- Spec: `docs/superpowers/specs/2026-05-12-snowball-design.md`
-- v0.1 plan: `docs/superpowers/plans/2026-05-12-snowball-v01-android.md`
-- App icon prompt: `docs/design/app-icon-prompt.md`
-- Dev environment setup: `docs/setup/android-dev-environment.md`
+SQLDelight schema: `composeApp/src/commonMain/sqldelight/com/snowball/db/`
+- `Category.sq`, `Debt.sq`, `Payment.sq`, `Settings.sq`, `_Init.sq`
+- Migrations: `1.sqm` (adds iconKey to Category), `2.sqm` (adds firstPaymentDate to Debt)
+- Current schema version: 3 (auto-detected from highest .sqm)
 
-Identity = "Editorial Frost" (navy `#0B0F14` bg + champagne pinpoint + ice-blue orbit arc). Fonts: Fraunces (display, with SOFT axis up) + DM Sans (body/labels). Snow*ball* wordmark italicizes "ball". Microcopy: "**LEFT OVER**" (renamed from "BREATHING ROOM" — that string wrapped at 4sp letter-spacing), "melted", "cleared". Tagline tested in mockups: "*A quieter way to owe.*" Currency locked to **PHP** for v1.
+## Tag history
 
-Decisions worth knowing:
-- **Categories are user-configurable**, but **Credit Card** and **MISC** are locked-in defaults. MISC is read-only ledger — shown but excluded from cutoff totals (user pays manually).
-- Cutoff math: **30th-payday cutoff covers days 1–14** of next month; **15th-payday cutoff covers days 15–30** of same month. (Day 15 belongs to the 15th cutoff — user clarified this at line 202 of the failed transcript.) End-of-month edge handled via `useLastDay` flag on `Debt.dueDay`.
-- `paymentsMade` is derived from Payment row count; `totalPayments` is original duration. The backfill field inserts synthetic Payment rows dated at `startDate`.
-- An already-paid-off debt (paymentsAlreadyMade == totalPayments) auto-archives on save.
-- Snowball-history visualization deferred to v0.2 (intentional).
-- Bug from "I added a debt for may 12 and due date is 5, not populating in home tab" is **deferred to v0.2** per user's call.
+| Tag | What |
+|---|---|
+| v0.1.0 | Initial release: Home/Debts/Settings + cutoff math + payments swipe |
+| v0.1.1 | UX polish (validation, delete confirm, accessibility, contrast, semantics) |
+| v0.2.0 | Home: Up next card + Your Journey card |
+| v0.2.1 | DebtDetailScreen + Archive view + MISC items + FAB dropdown |
+| v0.2.2 | Category Management + iconKey schema migration |
+| v0.2.3 | Cutoff rollover (OVERDUE section + 60s tick) |
+| v0.2.4 | (Superseded by v0.2.5 — was a grace-period workaround) |
+| v0.2.5 | Separate `firstPaymentDate` column; strict overdue semantics; backfill distribution |
+| v0.2.6 | PesoText auto-shrink to fit available width |
+| v0.2.7 | System back navigation + stacked INCOME/LEFT OVER cells |
+| v0.2.8 | Distribute backfilled payment dates across cycle months |
+| v0.2.9 | Insights page (snapshot + 12-cutoff forecast) |
+| v0.2.10 | Animation polish (counters, progress arc, chevron, list stagger, route transitions) |
 
-## What's left
+## Architecture decisions / nuances
 
-### Immediate (the thing that crashed the session)
+- **Cutoff windows:** 15th payday covers days 15–30 of same month; 30th payday covers days 1–14 of NEXT month. Day 15 belongs to 15th cutoff.
+- **`startDate` vs `firstPaymentDate`:** `startDate` = loan origination (informational). `firstPaymentDate` = when cycle 1 falls due (drives all schedule math). User's default convention: `firstPaymentDate = startDate + 1 month`.
+- **Backfill distribution:** When user enters `paymentsAlreadyMade = N`, the form creates N synthetic payments at `firstPaymentDate + i months` (i = 0..N-1). This ensures each fall in a distinct cutoff window. `reconcilePayments` also detects uniform-date legacy backfills (multiple rows same paidDate) and redistributes on save.
+- **MISC items:** `Debt` rows with `categoryId` in a LEDGER category, `totalPayments = 1`, auto-archived. Excluded from cutoff totals (filtered via `category.behavior == SCHEDULED` in calculators). Visible in their own section on Debts tab regardless of archive state.
+- **OverdueCalculator:** Strict "past due" semantics — a cycle is expected as soon as its due date passes. No grace period (was tried in v0.2.4, reverted in v0.2.5 once firstPaymentDate provided the right anchor).
+- **Insights forecast:** Walks `nextCutoff(today).next()` forward 12 cutoffs, simulating virtual payments per iteration so debts roll off the list as their cycles exhaust.
+- **PesoText:** Always wraps in `BoxWithConstraints` and auto-shrinks via `TextMeasurer` so long amounts never break layout. Opt-in `animate = true` tweens the value (used on DUE, INCOME, LEFT OVER, Insights remaining).
+- **Route transitions:** `AnimatedContent` with `slideInHorizontally`/`slideOutHorizontally` (NOT `slideIntoContainer` — that's Android-only). Forward navigation slides Start→End; back slides End→Start. Heuristic: `forward = initialState is Route.Tabs`.
+- **System back:** `SystemBackHandler` `expect/actual` in `ui/nav/`. Android impl uses `androidx.activity.compose.BackHandler`. Enabled whenever route is not Tabs.
 
-User's last request before the crash: **run an independent UX/UI inspector subagent** to do an unbiased review of the app on the emulator. The dispatched subagent (`aa0131d78fd4581ce`) captured one screenshot (`%TEMP%\snowball-home-empty.png`) then crashed reading it — so no `docs/design/ux-review-2026-05-12.md` was produced.
+## Build / run
 
-Next concrete steps:
-1. Re-dispatch the UX inspector with a hard rule: **do not call the Read tool on PNGs**. Inspect via code under `composeApp/src/commonMain/kotlin/com/snowball/ui/` + adb behavioral signals (`dumpsys window`, `dumpsys input`, logcat, `dumpsys activity top`). The screenshots stay on disk for the user.
-2. Output goes to `docs/design/ux-review-2026-05-12.md` per the format in the original prompt (TL;DR, Strengths, Issues by severity, Accessibility, Priority order, Methodology).
-3. The full inspector prompt is at line 1213 of the failed transcript — reuse it but strip steps 2–3 (screenshot+Read) and replace with "code + adb-only".
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+.\gradlew.bat :composeApp:assembleDebug
+```
 
-### v0.2 — explicitly deferred during planning
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb install -r composeApp\build\outputs\apk\debug\composeApp-debug.apk
+& $adb shell am start -n com.snowball/.MainActivity
+```
 
-A new plan needs to be written for v0.2 (no plan doc exists yet). Scope agreed during the spec/plan discussion (transcript lines 222, 230, 289, 356, 806, 995, 1004, 1040, 1104):
+- Emulator: `emulator-5554` (Pixel_7, API 36, Android 16), 1080×2400
+- Sideload target: Samsung S25, One UI 8.5, Android 16
+- `adb` not on PATH — use full path above
+- App package: `com.snowball`, launcher: `com.snowball/.MainActivity`
+- JDK 21 from Android Studio's bundled JBR. AGP 8.7. Compose Multiplatform 1.8.0.
 
-**UI screens / features**
-- **Debt Detail screen** — header (name, category badge, status), big progress arc with `X of Y paid`, stats (amount left, monthly, due day, start date, projected end date), payment history list (tap row to undo that payment), actions (Edit · Archive · Delete)
-- **Archive view** — accessed via Active/Archived filter on Debts tab; paid-off debts, read-only
-- **MISC items UI** — separate FAB action ("Add MISC item"), rendered as own section at bottom of Debts list, read-only ledger (no progress arc, excluded from cutoff totals)
-- **Snowball journey card** on Home — % cleared, total melted, debt-free forecast date (all derived from existing data, no extra inputs)
-- **"Up next" mini-card** on Home — next cutoff's total + window. Resolves the "I added a debt for May 12 due day 5 and don't see it" confusion (correct behavior in v0.1, but invisible without this card).
-- **Category Management screen** — pushed from Settings; list categories with system-lock icons on Credit Card + MISC; inline rename (system not editable); "+ New category"; delete blocked for system, prompts to reassign for user categories with debts. Adds `iconKey` column + icon picker. *(User said in the session: defer this even though only Credit Card + MISC ship as system.)*
+## v0.3 backlog (deferred from v0.2)
 
-**Behaviors**
-- **Overdue rollover with red tag** — unpaid debts from a past cutoff carry forward and surface visually
-- **Auto-rollover at midnight** — cutoff dashboard advances automatically at midnight of the cutoff boundary
-- **Per-debt payment history view** — implied by the Debt Detail screen above; also unblocks the v0.1 caveat that backfilled payments all share `startDate` as `paidDate` (looks weird only here)
+**E — Notifications**
+- Payday-style notifications on 15th and 30th. Platform-specific via `expect/actual`: Android `AlarmManager` + `NotificationCompat`. Settings already has the toggle + time-of-day picker stub.
+- Needs real device verification (emulator can't fake wall-clock progression cleanly).
 
-**Platform expansion**
-- **Notifications** — payday-style on 15th and 30th. Platform-specific via `expect/actual`: Android `AlarmManager` + `NotificationCompat`; iOS `UNUserNotificationCenter`; desktop native OS notifications. Settings already has the toggle + time-of-day picker stub.
-- **iOS target** — Compose Multiplatform; build on Mac via Xcode; free signing for daily personal use until $99/yr cert for TestFlight
-- **macOS desktop target** — fast iteration during development; usable client
-- **Windows desktop target** — user's work machine
+**F — Multiplatform expansion**
+- iOS target (needs Mac + Xcode + Apple ID; free signing OK for personal use until $99/yr cert for TestFlight)
+- macOS desktop target (fast iteration during development)
+- Windows desktop target (work machine)
+- Mostly toolchain/build-config work. Existing commonMain code is already mostly platform-agnostic.
 
-**Out of scope even for v0.2** (parked further out, per spec): cross-device sync / cloud backup, snowball-method *recommendations* ("attack this next"), avalanche method, what-if extra-payment simulations, per-debt custom notification timing, cutoff history view, spreadsheet import, multiple income sources / variable cutoff income, multi-currency, light mode, localization, search/sort in Debts list.
+**v0.2-style features that didn't make the cut**
+- Per-debt payoff calendar (Insights v2)
+- By-category breakdown chart (Insights v2)
+- Snowball ranking (smallest balance first)
+- Tap-to-drill on Insights forecast rows
+- Time-horizon switcher on Insights (3/6/12/all)
+- Proper coachmark for first-launch swipe instruction
+- Cross-device sync / cloud backup
+- Snowball-method recommendations
+- Avalanche method (would need interest rate field)
+- What-if extra-payment simulations
+- Cutoff history view
+- Spreadsheet import
 
-## Gotchas
+## Known gotchas
 
-- **`Read` tool crashes on certain PNGs from this session with `API Error: 400 Could not process image`.** Affected files include `C:\Users\Pika\AppData\Local\Temp\snowball-home-empty.png` (UX inspector) and the user's icon `C:\Users\Pika\Downloads\Gemini_Generated_Image_fas1xhfas1xhfas1.png`. This bug recurred **three times during this session** — subagents `a2fbb9b49b6c9aaf6` (Task 2), `ad5389522fe3460ec` (Phase 5+6), and `aa0131d78fd4581ce` (UX inspector). For the first two, the main agent worked around it by verifying repo state directly and committing on the subagent's behalf. For the third, the main agent itself ran Read on a PNG to test and **stayed poisoned** — every reply after that returned the same error until session restart. Rule: never call Read on PNGs. PowerShell `System.Drawing` works fine for resize/dimensions (that's how the launcher icons were built).
-- Emulator is `emulator-5554` (AVD name `Pixel_7`, API 36, Android 16), screen 1080×2400. **Emulator-only dev path** — user explicitly chose option B (no USB debugging to real phone). Sideload to S25 by copying `composeApp\build\outputs\apk\debug\composeApp-debug.apk` via Drive or USB-MTP when ready.
-- Phone target: **Samsung S25**, One UI 8.5, Android 16, API 36.1.
-- Env vars set persistently but session inherits stale env from before they were set. Every shell command must explicitly set `$env:JAVA_HOME` and `$env:ANDROID_HOME`, and call `adb` via full path. `adb` not on PATH — use `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"`.
-- Toolchain: **JDK 21** (bundled with Android Studio Panda 2025.3.4), not JDK 17. Gradle wrapper takes over after one-time bootstrap from `$env:LOCALAPPDATA\Temp\gradle-bootstrap\gradle-8.13`. AGP 8.7 supports both.
-- Git LF→CRLF warnings on every commit are harmless; don't try to fix.
-- Build command pattern that works:
-  ```powershell
-  $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-  $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
-- App package is `com.snowball`; launcher activity `com.snowball/.MainActivity`. Tag `v0.1.0` exists locally and on remote.
-- Finsky errors in logcat about `com.snowball` are Play Store complaining about a sideloaded package — ignore.
-- Subagents default to bash shell on Windows. The first UX inspector dispatch crashed on `&` / `$env:` syntax before the screenshot crash. Any new subagent on Windows should be told explicitly to use PowerShell.
-- SQLDelight JDBC driver is JVM-only — repository tests live in `androidUnitTest`, not `commonTest`. Don't move them.
-- Brainstorm scratch dir `.superpowers/brainstorm/` is gitignored. A frontend-design preview server may still be running on `http://localhost:55195` from the brainstorming phase (low priority; can be killed).
-- Two form input bugs already fixed (`656327e` for text fields, `3749cb3` for start date) had the same root cause: `var state` instead of `mutableStateOf`, plus binding `value` to a parsed type that can't represent in-progress input. Watch for this pattern in any new fields.
+- **`Read` tool on `.png` files crashes the agent.** Confirmed on multiple PNGs from `%TEMP%`. Capture screenshots for the human user, never Read them. uiautomator XML dumps work fine.
+- **Subagents default to bash shell on Windows.** Tell them explicitly to use the Gradle wrapper path or set `$env:JAVA_HOME` before gradle commands.
+- **Git LF→CRLF warnings on every commit are harmless.** Don't try to fix.
+- **`HANDOFF.md` and `build.log` were accidentally committed at v0.2.5.** Not a real problem but worth a future cleanup.
+- **`slideIntoContainer` / `slideOutOfContainer` are Android-only.** Used `slideInHorizontally` / `slideOutHorizontally` for cross-platform compatibility (works once iOS/desktop targets are added).
 
 ## How to resume
 
-Paste this into a fresh session:
-
-> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. The previous session got poisoned by `API Error: 400 Could not process image` after dispatching a UX inspector subagent that tried to Read a screenshot PNG. Pick up at the "What's left" section: re-dispatch the UX/UI inspector, but this time forbid Read on PNGs — the inspector must work from `composeApp/src/commonMain/kotlin/com/snowball/ui/` source + adb behavioral signals (`dumpsys`, logcat) only. Reuse the original prompt at line 1213 of `C:\Users\Pika\.claude\projects\C--Users-Pika-projects-snowball\826c9af7-02fb-4d81-98a1-0f444df0d973.jsonl`, deleting the screencap+Read steps. Output to `docs/design/ux-review-2026-05-12.md`. App is built and installed on `emulator-5554` at HEAD `bc1e7c7`.
+> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. Current state is `v0.2.10`. The full feature backlog and architecture decisions are documented above. For next steps, common ones are: (a) sub-project E (notifications), (b) sub-project F (iOS/macOS/Windows targets), (c) iterating on the Insights page (per-debt payoff calendar, by-category chart), (d) any user-facing polish the user requests. Pick up from the user's first message.
