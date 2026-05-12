@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -64,6 +66,9 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
     var alreadyMadeTouched by remember { mutableStateOf(false) }
     var alreadyMadeHadFocus by remember { mutableStateOf(false) }
 
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var overflowOpen by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = SnowColors.Night,
         topBar = {
@@ -81,6 +86,29 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                             contentDescription = "Back",
                             tint = SnowColors.Frost,
                         )
+                    }
+                },
+                actions = {
+                    if (vm.isEditing) {
+                        IconButton(onClick = { overflowOpen = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.MoreVert,
+                                contentDescription = "More options",
+                                tint = SnowColors.Frost,
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = overflowOpen,
+                            onDismissRequest = { overflowOpen = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete", color = SnowColors.Ember) },
+                                onClick = {
+                                    overflowOpen = false
+                                    showDeleteConfirm = true
+                                },
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -288,6 +316,32 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                 )
             }
             Spacer(Modifier.height(16.dp))
+        }
+        if (showDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = {
+                    Text(
+                        "Delete ${state.name.ifBlank { "this debt" }}?",
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                },
+                text = { Text("This removes the debt and all payment history.") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        showDeleteConfirm = false
+                        if (vm.delete()) onSaved()
+                    }) { Text("Delete", color = SnowColors.Ember) }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showDeleteConfirm = false }) {
+                        Text("Cancel", color = SnowColors.FrostMute)
+                    }
+                },
+                containerColor = SnowColors.CardElev,
+                titleContentColor = SnowColors.Frost,
+                textContentColor = SnowColors.FrostMute,
+            )
         }
     }
 }
