@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,21 +92,23 @@ fun HomeScreen(vm: HomeViewModel) {
 @Composable
 private fun SwipeablePaymentRow(row: DueRow, onMarkPaid: () -> Unit, onUndo: () -> Unit) {
     val haptic = LocalHapticFeedback.current
+    val onMarkPaidLatest by rememberUpdatedState(onMarkPaid)
+    val onUndoLatest by rememberUpdatedState(onUndo)
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
+            // enableDismissFromXxx (re-evaluated each recompose) gates which
+            // direction is even draggable, so this lambda just fires the
+            // matching callback. Captured lambdas are read via rememberUpdatedState
+            // so we never call into a stale row's onMarkPaid/onUndo.
             when (value) {
                 SwipeToDismissBoxValue.EndToStart -> {
-                    if (!row.isPaidThisCycle) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onMarkPaid()
-                    }
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onMarkPaidLatest()
                     false
                 }
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    if (row.isPaidThisCycle) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onUndo()
-                    }
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onUndoLatest()
                     false
                 }
                 else -> false
