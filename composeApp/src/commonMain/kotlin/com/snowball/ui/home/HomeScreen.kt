@@ -64,16 +64,20 @@ fun HomeScreen(vm: HomeViewModel) {
             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
             color = SnowColors.FrostDim,
         )
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             "Swipe left to mark paid · swipe right to undo",
             style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-            color = SnowColors.FrostDeep,
+            color = SnowColors.FrostMute,
         )
 
         Spacer(Modifier.height(8.dp))
         if (state.rows.isEmpty()) {
-            EmptyHint()
+            val message = when {
+                state.income == 0.0 -> "Start by setting your income in Settings."
+                else -> "No payments due this cutoff yet.\nAdd debts from the Debts tab."
+            }
+            EmptyHint(message)
         } else {
             state.rows.forEach { row ->
                 key(row.debt.id) {
@@ -84,6 +88,7 @@ fun HomeScreen(vm: HomeViewModel) {
                     )
                 }
             }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -232,13 +237,13 @@ private fun ActionBackground(
 }
 
 @Composable
-private fun EmptyHint() {
+private fun EmptyHint(message: String) {
     Box(
         modifier = Modifier.fillMaxWidth().padding(40.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            "No payments due this cutoff yet.\nAdd debts from the Debts tab.",
+            message,
             style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
             color = SnowColors.FrostDim,
         )
