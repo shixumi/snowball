@@ -1,0 +1,28 @@
+CREATE TABLE Payment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    debtId INTEGER NOT NULL REFERENCES Debt(id) ON DELETE CASCADE,
+    paidDate TEXT NOT NULL,                    -- ISO yyyy-MM-dd
+    amount REAL NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE INDEX idx_payment_debt ON Payment(debtId);
+CREATE INDEX idx_payment_paiddate ON Payment(paidDate);
+
+selectAllForDebt:
+SELECT * FROM Payment WHERE debtId = ? ORDER BY paidDate DESC, id DESC;
+
+countForDebt:
+SELECT COUNT(*) FROM Payment WHERE debtId = ?;
+
+selectLatestForDebt:
+SELECT * FROM Payment WHERE debtId = ? ORDER BY paidDate DESC, id DESC LIMIT 1;
+
+selectInDateRange:
+SELECT * FROM Payment WHERE debtId = ? AND paidDate >= :from AND paidDate <= :to ORDER BY paidDate DESC;
+
+insert:
+INSERT INTO Payment(debtId, paidDate, amount, createdAt) VALUES (?, ?, ?, ?);
+
+deleteById:
+DELETE FROM Payment WHERE id = ?;
