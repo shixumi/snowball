@@ -19,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,20 +35,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.formatAmountWithSeparators
+import com.snowball.ui.util.formatLongDate
 
 @Composable
 fun DebtsScreen(
     vm: DebtsViewModel,
     onAddDebt: () -> Unit,
-    onEdit: (Long) -> Unit,
+    onAddMisc: () -> Unit,
+    onOpenDebt: (Long) -> Unit,
 ) {
     var tick by remember { mutableStateOf(0) }
     val state = remember(tick) { vm.load() }
+    var fabExpanded by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
@@ -79,68 +86,36 @@ fun DebtsScreen(
             Spacer(Modifier.height(16.dp))
 
             state.categories.forEach { cat ->
-                val debts = state.debtsByCategory[cat.id].orEmpty()
-                if (debts.isEmpty()) return@forEach
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = cat.icon(),
-                        contentDescription = null,
-                        tint = SnowColors.FrostDim,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        cat.name.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                        color = SnowColors.FrostDim,
-                    )
-                }
+                val rows = state.scheduledByCategory[cat.id].orEmpty()
+                if (rows.isEmpty()) return@forEach
+                CategoryHeader(cat = cat)
                 Spacer(Modifier.height(8.dp))
-                debts.forEach { row ->
-                    val d = row.debt
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SnowColors.CardElev)
-                            .clickable { onEdit(d.id) }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                d.name,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = SnowColors.Frost,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                "Day ${d.dueDay} · ${d.totalPayments} months · ${row.paymentsMade}/${d.totalPayments} paid",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = SnowColors.FrostMute,
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        PesoText(
-                            amount = d.monthlyAmount,
-                            style = MaterialTheme.typography.headlineSmall,
-                            pesoColor = SnowColors.FrostDim,
-                            numberColor = SnowColors.Frost,
-                        )
-                    }
+                rows.forEach { row ->
+                    DebtRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
                     Spacer(Modifier.height(8.dp))
                 }
                 Spacer(Modifier.height(16.dp))
             }
 
-            if (state.debtsByCategory.isEmpty()) {
+            if (state.miscRows.isNotEmpty()) {
+                val miscCat = state.categories.firstOrNull { c -> state.miscRows.any { it.debt.categoryId == c.id } }
+                if (miscCat != null) CategoryHeader(cat = miscCat)
+                Spacer(Modifier.height(8.dp))
+                state.miscRows.forEach { row ->
+                    MiscRowItem(row = row, onClick = { onOpenDebt(row.debt.id) })
+                    Spacer(Modifier.height(8.dp))
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+
+            if (state.scheduledByCategory.isEmpty() && state.miscRows.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(40.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "No debts yet. Tap + to add your first.",
+                        if (state.showArchived) "Nothing archived yet."
+                        else "No debts yet. Tap + to add your first.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = SnowColors.FrostDim,
                     )
@@ -148,21 +123,131 @@ fun DebtsScreen(
             }
         }
 
-        FloatingActionButton(
-            onClick = onAddDebt,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp)
-                .size(56.dp)
-                .clip(CircleShape),
-            containerColor = SnowColors.Ice,
-            contentColor = SnowColors.Night,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Add,
-                contentDescription = "Add debt",
-                tint = SnowColors.Night,
+        if (!state.showArchived) {
+            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
+                FloatingActionButton(
+                    onClick = { fabExpanded = true },
+                    modifier = Modifier.size(56.dp).clip(CircleShape),
+                    containerColor = SnowColors.Ice,
+                    contentColor = SnowColors.Night,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Add,
+                        contentDescription = "Add",
+                        tint = SnowColors.Night,
+                    )
+                }
+                DropdownMenu(
+                    expanded = fabExpanded,
+                    onDismissRequest = { fabExpanded = false },
+                    offset = DpOffset(x = (-160).dp, y = 0.dp),
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Add debt", color = SnowColors.Frost) },
+                        onClick = { fabExpanded = false; onAddDebt() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Add MISC item", color = SnowColors.Frost) },
+                        onClick = { fabExpanded = false; onAddMisc() },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryHeader(cat: com.snowball.data.model.Category) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = cat.icon(),
+            contentDescription = null,
+            tint = SnowColors.FrostDim,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            cat.name.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+            color = SnowColors.FrostDim,
+        )
+    }
+}
+
+@Composable
+private fun DebtRowItem(row: DebtRow, onClick: () -> Unit) {
+    val d = row.debt
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SnowColors.CardElev)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                d.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = SnowColors.Frost,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle = if (d.isArchived) {
+                val date = row.clearedDate?.let { formatLongDate(it) } ?: "—"
+                "Cleared $date · ₱${formatAmountWithSeparators(row.totalPaidAmount)}"
+            } else {
+                "Day ${d.dueDay} · ${d.totalPayments} months · ${row.paymentsMade}/${d.totalPayments} paid"
+            }
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
             )
         }
+        Spacer(Modifier.width(8.dp))
+        PesoText(
+            amount = d.monthlyAmount,
+            style = MaterialTheme.typography.headlineSmall,
+            pesoColor = SnowColors.FrostDim,
+            numberColor = SnowColors.Frost,
+        )
+    }
+}
+
+@Composable
+private fun MiscRowItem(row: DebtRow, onClick: () -> Unit) {
+    val d = row.debt
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SnowColors.CardElev)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                d.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = SnowColors.Frost,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                "Paid ${formatLongDate(d.startDate)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        PesoText(
+            amount = d.monthlyAmount,
+            style = MaterialTheme.typography.headlineSmall,
+            pesoColor = SnowColors.FrostDim,
+            numberColor = SnowColors.Frost,
+        )
     }
 }

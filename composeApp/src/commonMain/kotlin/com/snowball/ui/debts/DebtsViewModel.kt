@@ -18,10 +18,7 @@ data class DebtsState(
     val scheduledByCategory: Map<Long, List<DebtRow>>,
     val miscRows: List<DebtRow>,
     val showArchived: Boolean,
-) {
-    /** Compatibility alias used by DebtsScreen before its Task-8 migration. Remove in Task 8. */
-    val debtsByCategory: Map<Long, List<DebtRow>> get() = scheduledByCategory
-}
+)
 
 class DebtsViewModel(private val repos: Repos) {
     var showArchived: Boolean = false

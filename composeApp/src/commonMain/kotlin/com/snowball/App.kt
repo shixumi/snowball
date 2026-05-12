@@ -61,7 +61,8 @@ fun App(repos: Repos) {
                             Tab.Debts -> DebtsScreen(
                                 vm = debtsVm,
                                 onAddDebt = { route = Route.Form(null) },
-                                onEdit = { id -> route = Route.Form(id) },
+                                onAddMisc = { /* TODO Task 9 */ },
+                                onOpenDebt = { id -> route = Route.Form(id) },
                             )
                             Tab.Settings -> {
                                 val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
