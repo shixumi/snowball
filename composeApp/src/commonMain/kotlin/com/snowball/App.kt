@@ -8,16 +8,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import com.snowball.ui.theme.SnowballTheme
 
 @Composable
 fun App() {
-    MaterialTheme {
+    SnowballTheme {
         Box(
-            modifier = Modifier.fillMaxSize().background(Color(0xFF0B0F14)),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            Text("Snowball", color = Color(0xFFF2F5F8))
+            Text(
+                "Snowball",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
         }
     }
 }
