@@ -213,13 +213,15 @@ Create `build.gradle.kts` (project root):
 
 ```kotlin
 plugins {
-    alias(libs.plugins.kotlin-multiplatform) apply false
-    alias(libs.plugins.android-application) apply false
-    alias(libs.plugins.compose-multiplatform) apply false
-    alias(libs.plugins.compose-compiler) apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
+    alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.sqldelight) apply false
 }
 ```
+
+> Note: TOML aliases use hyphens (`kotlin-multiplatform`), but Gradle's generated Kotlin DSL accessors map hyphens to dots. Use `libs.plugins.kotlin.multiplatform` in Kotlin scripts.
 
 - [ ] **Step 5: Write `composeApp/build.gradle.kts`**
 
@@ -230,10 +232,10 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlin-multiplatform)
-    alias(libs.plugins.android-application)
-    alias(libs.plugins.compose-multiplatform)
-    alias(libs.plugins.compose-compiler)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.sqldelight)
 }
 
