@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.snowball.data.Repos
 import com.snowball.ui.debts.DebtsScreen
@@ -22,6 +20,8 @@ import com.snowball.ui.home.HomeScreen
 import com.snowball.ui.home.HomeViewModel
 import com.snowball.ui.nav.BottomNav
 import com.snowball.ui.nav.Tab
+import com.snowball.ui.settings.SettingsScreen
+import com.snowball.ui.settings.SettingsViewModel
 import com.snowball.ui.theme.SnowballTheme
 
 sealed interface Route {
@@ -50,7 +50,10 @@ fun App(repos: Repos) {
                                 onAddDebt = { route = Route.Form(null) },
                                 onEdit = { id -> route = Route.Form(id) },
                             )
-                            Tab.Settings -> PlaceholderScreen("Settings")
+                            Tab.Settings -> {
+                                val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
+                                SettingsScreen(settingsVm)
+                            }
                         }
                     }
                     is Route.Form -> {
@@ -71,9 +74,3 @@ fun App(repos: Repos) {
     }
 }
 
-@Composable
-private fun PlaceholderScreen(name: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(name, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onBackground)
-    }
-}
