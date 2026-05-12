@@ -432,15 +432,25 @@ git commit -m "feat: hello-world compose entry point"
 
 - [ ] **Step 1: Download Fraunces variable font**
 
-Download `Fraunces[SOFT,WONK,opsz,wght].ttf` from https://fonts.google.com/specimen/Fraunces (click "Download family" → extract the variable file in `Fraunces/`).
+```powershell
+$dest = "composeApp\src\commonMain\composeResources\font"
+New-Item -ItemType Directory -Path $dest -Force | Out-Null
+Invoke-WebRequest `
+  -Uri "https://raw.githubusercontent.com/googlefonts/fraunces/master/fonts/Fraunces%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf" `
+  -OutFile "$dest\Fraunces-Variable.ttf" -UseBasicParsing
+```
 
-Save to `composeApp/src/commonMain/composeResources/font/Fraunces-Variable.ttf`.
+File size should be ~350 KB. Note the repo's default branch is `master`, not `main`.
 
 - [ ] **Step 2: Download DM Sans variable font**
 
-Download `DMSans[opsz,wght].ttf` from https://fonts.google.com/specimen/DM+Sans.
+```powershell
+Invoke-WebRequest `
+  -Uri "https://raw.githubusercontent.com/googlefonts/dm-fonts/main/Sans/fonts/variable/DMSans%5Bopsz%2Cwght%5D.ttf" `
+  -OutFile "$dest\DMSans-Variable.ttf" -UseBasicParsing
+```
 
-Save to `composeApp/src/commonMain/composeResources/font/DMSans-Variable.ttf`.
+File size should be ~247 KB. Both files' first 4 bytes must be `00 01 00 00` (TrueType signature) — confirm before proceeding.
 
 - [ ] **Step 3: Verify resources compile**
 
