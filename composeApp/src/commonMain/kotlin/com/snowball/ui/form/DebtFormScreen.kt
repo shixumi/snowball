@@ -275,6 +275,21 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                     )
                 }
                 Spacer(Modifier.height(16.dp))
+            } else {
+                Column {
+                    Text(
+                        "PAYMENTS RECORDED",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 3.sp),
+                        color = SnowColors.FrostDim,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "${vm.recordedPayments} of ${vm.originalTotalPayments}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = SnowColors.Frost,
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
