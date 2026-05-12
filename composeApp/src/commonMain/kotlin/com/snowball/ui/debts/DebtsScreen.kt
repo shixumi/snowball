@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.components.PesoText
+import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 
 @Composable
@@ -62,11 +64,20 @@ fun DebtsScreen(
             state.categories.forEach { cat ->
                 val debts = state.debtsByCategory[cat.id].orEmpty()
                 if (debts.isEmpty()) return@forEach
-                Text(
-                    cat.name.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                    color = SnowColors.FrostDim,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.Icon(
+                        imageVector = cat.icon(),
+                        contentDescription = null,
+                        tint = SnowColors.FrostDim,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        cat.name.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                        color = SnowColors.FrostDim,
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
                 debts.forEach { d ->
                     Row(

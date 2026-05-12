@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -197,6 +199,14 @@ private fun CategoryDropdown(vm: DebtFormViewModel) {
             vm.categories.forEach { cat ->
                 DropdownMenuItem(
                     text = { Text(cat.name, color = SnowColors.Frost) },
+                    leadingIcon = {
+                        androidx.compose.material3.Icon(
+                            imageVector = cat.icon(),
+                            contentDescription = null,
+                            tint = SnowColors.FrostMute,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
                     onClick = {
                         vm.update { it.copy(categoryId = cat.id) }
                         expanded = false
