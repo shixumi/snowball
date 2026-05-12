@@ -31,7 +31,17 @@ class AmountFormatTest {
     }
 
     @Test
-    fun threeDecimalsRoundDown() {
-        assertEquals("1500.55", 1500.555.toFormFieldString())
+    fun threeDecimalsRoundToTwo() {
+        // The +0.5 trick performs round-half-up at the hundredths place;
+        // 1500.555 is stored as ~1500.5550000000002, so it rounds up to 1500.56.
+        assertEquals("1500.56", 1500.555.toFormFieldString())
+    }
+
+    @Test
+    fun floatingPointEdgeCaseRendersCorrectly() {
+        // 1500.56 is stored as ~1500.5599999999999 in IEEE 754;
+        // naive truncation would yield "1500.55". The +0.5 in the
+        // fractional calculation fixes this.
+        assertEquals("1500.56", 1500.56.toFormFieldString())
     }
 }

@@ -12,7 +12,7 @@ fun Double.toFormFieldString(): String {
     if (this == 0.0) return ""
     val whole = this.toLong()
     val fractionalPart = abs(this) - abs(whole)
-    val fraction = (fractionalPart * 100).toInt()
+    val fraction = (fractionalPart * 100 + 0.5).toInt()
     return if (fraction == 0) whole.toString()
     else "$whole.${fraction.toString().padStart(2, '0')}"
 }
