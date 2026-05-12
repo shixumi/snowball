@@ -239,6 +239,23 @@ fun DebtDetailScreen(
                     value = state.projectedEndDate?.let { formatLongDate(it) } ?: "—",
                 )
 
+                state.overdue?.let { info ->
+                    Spacer(Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "OVERDUE",
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                            color = SnowColors.Ember,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            "${info.missedCycles} ${if (info.missedCycles == 1) "cycle" else "cycles"} · ₱${formatAmountWithSeparators(info.missedAmount)}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = SnowColors.Ember,
+                        )
+                    }
+                }
+
                 if (state.payments.isNotEmpty()) {
                     Spacer(Modifier.height(24.dp))
                     Box(
