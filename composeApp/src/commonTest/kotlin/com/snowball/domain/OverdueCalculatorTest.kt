@@ -97,4 +97,51 @@ class OverdueCalculatorTest {
         )
         assertTrue(info.isEmpty())
     }
+
+    @Test
+    fun cycleWithinOneMonthGraceNotOverdue() {
+        // User scenario: 6-cycle debt starting Feb 17 (dueDay 17), 2 payments made.
+        // Today is May 13, so cycle 3 (Apr 17) is 26 days past due — within grace.
+        // System should NOT flag this as overdue.
+        val d = debt(
+            startDate = LocalDate(2026, 2, 17),
+            dueDay = 17,
+            totalPayments = 6,
+            monthlyAmount = 3566.71,
+        )
+        val payments = listOf(
+            Payment(1L, d.id, LocalDate(2026, 2, 17), 3566.71),
+            Payment(2L, d.id, LocalDate(2026, 2, 17), 3566.71),
+        )
+        val info = OverdueCalculator.computeOverdue(
+            listOf(d),
+            mapOf(d.id to payments),
+            today = LocalDate(2026, 5, 13),
+        )
+        assertTrue(info.isEmpty(), "Apr 17 cycle within 1-month grace on May 13")
+    }
+
+    @Test
+    fun cycleOverdueOnceGraceExpires() {
+        // Same debt as above, but today is May 18 — past Apr 17 + 1 month.
+        // Now the Apr 17 cycle IS overdue.
+        val d = debt(
+            startDate = LocalDate(2026, 2, 17),
+            dueDay = 17,
+            totalPayments = 6,
+            monthlyAmount = 3566.71,
+        )
+        val payments = listOf(
+            Payment(1L, d.id, LocalDate(2026, 2, 17), 3566.71),
+            Payment(2L, d.id, LocalDate(2026, 2, 17), 3566.71),
+        )
+        val info = OverdueCalculator.computeOverdue(
+            listOf(d),
+            mapOf(d.id to payments),
+            today = LocalDate(2026, 5, 18),
+        )
+        assertEquals(1, info.size)
+        assertEquals(1, info[0].missedCycles)
+        assertEquals(LocalDate(2026, 4, 17), info[0].firstMissedDueDate)
+    }
 }
