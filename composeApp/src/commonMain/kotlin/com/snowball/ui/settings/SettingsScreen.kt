@@ -1,5 +1,10 @@
 package com.snowball.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,7 +90,11 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Decimal),
             placeholder = { Text("₱ 0", color = SnowColors.FrostDim) },
             trailingIcon = {
-                if (ackVisible) {
+                AnimatedVisibility(
+                    visible = ackVisible,
+                    enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.6f, animationSpec = tween(200)),
+                    exit = fadeOut(tween(200)),
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Check,
                         contentDescription = "Saved",

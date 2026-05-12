@@ -2,7 +2,10 @@ package com.snowball.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -118,30 +121,36 @@ fun HomeScreen(vm: HomeViewModel) {
             )
         }
 
-        if (state.overdue.isNotEmpty()) {
-            Spacer(Modifier.height(24.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(SnowColors.NightElev)
-                    .border(1.dp, SnowColors.Ember.copy(alpha = 0.4f), RoundedCornerShape(28.dp))
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-            ) {
-                Text(
-                    "OVERDUE",
-                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
-                    color = SnowColors.Ember,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Tap to mark caught up",
-                    style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-                    color = SnowColors.FrostMute,
-                )
-                Spacer(Modifier.height(12.dp))
-                state.overdue.forEach { info ->
-                    OverdueRow(info = info, onClick = { pendingCatchUp = info })
+        AnimatedVisibility(
+            visible = state.overdue.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Column {
+                Spacer(Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(SnowColors.NightElev)
+                        .border(1.dp, SnowColors.Ember.copy(alpha = 0.4f), RoundedCornerShape(28.dp))
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                ) {
+                    Text(
+                        "OVERDUE",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                        color = SnowColors.Ember,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Tap to mark caught up",
+                        style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                        color = SnowColors.FrostMute,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    state.overdue.forEach { info ->
+                        OverdueRow(info = info, onClick = { pendingCatchUp = info })
+                    }
                 }
             }
         }

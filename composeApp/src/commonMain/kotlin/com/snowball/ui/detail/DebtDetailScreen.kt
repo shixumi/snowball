@@ -1,5 +1,8 @@
 package com.snowball.ui.detail
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -202,12 +205,17 @@ fun DebtDetailScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Box(contentAlignment = Alignment.Center) {
+                                val animatedPaid by animateIntAsState(
+                                    targetValue = state.paymentsMade,
+                                    animationSpec = tween(600, easing = FastOutSlowInEasing),
+                                    label = "paymentCount",
+                                )
                                 ProgressArc(
                                     progress = if (state.debt.totalPayments > 0) state.paymentsMade.toFloat() / state.debt.totalPayments else 0f,
                                     modifier = Modifier.size(160.dp),
                                 )
                                 Text(
-                                    "${state.paymentsMade} of ${state.debt.totalPayments}",
+                                    "$animatedPaid of ${state.debt.totalPayments}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     color = SnowColors.Frost,
                                 )
