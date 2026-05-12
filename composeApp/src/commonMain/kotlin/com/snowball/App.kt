@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.snowball.data.Repos
+import com.snowball.ui.categories.CategoryManagementScreen
+import com.snowball.ui.categories.CategoryManagementViewModel
 import com.snowball.ui.debts.DebtsScreen
 import com.snowball.ui.debts.DebtsViewModel
 import com.snowball.ui.detail.DebtDetailScreen
@@ -35,6 +37,7 @@ sealed interface Route {
     data class Form(val existingDebtId: Long?) : Route
     data class DebtDetail(val debtId: Long) : Route
     data object MiscForm : Route
+    data object CategoryManagement : Route
 }
 
 @Composable
@@ -72,7 +75,10 @@ fun App(repos: Repos) {
                             )
                             Tab.Settings -> {
                                 val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
-                                SettingsScreen(settingsVm)
+                                SettingsScreen(
+                                    vm = settingsVm,
+                                    onManageCategories = { route = Route.CategoryManagement },
+                                )
                             }
                         }
                     }
@@ -99,6 +105,13 @@ fun App(repos: Repos) {
                             vm = miscVm,
                             onCancel = { route = Route.Tabs },
                             onSaved = { route = Route.Tabs; refreshKey++ },
+                        )
+                    }
+                    is Route.CategoryManagement -> {
+                        val catVm = remember(refreshKey) { CategoryManagementViewModel(repos) }
+                        CategoryManagementScreen(
+                            vm = catVm,
+                            onBack = { route = Route.Tabs; refreshKey++ },
                         )
                     }
                 }
