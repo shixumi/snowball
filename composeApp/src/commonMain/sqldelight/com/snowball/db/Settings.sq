@@ -1,0 +1,25 @@
+-- Single-row settings: id is always 1.
+CREATE TABLE Settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    incomePerCutoff REAL NOT NULL DEFAULT 0.0,
+    currency TEXT NOT NULL DEFAULT 'PHP',
+    notificationsEnabled INTEGER NOT NULL DEFAULT 1,
+    notificationHour INTEGER NOT NULL DEFAULT 9,
+    notificationMinute INTEGER NOT NULL DEFAULT 0
+);
+
+select:
+SELECT * FROM Settings WHERE id = 1;
+
+insertIfMissing:
+INSERT OR IGNORE INTO Settings(id, incomePerCutoff, currency, notificationsEnabled, notificationHour, notificationMinute)
+VALUES (1, 0.0, 'PHP', 1, 9, 0);
+
+setIncome:
+UPDATE Settings SET incomePerCutoff = :income WHERE id = 1;
+
+setNotificationsEnabled:
+UPDATE Settings SET notificationsEnabled = :enabled WHERE id = 1;
+
+setNotificationTime:
+UPDATE Settings SET notificationHour = :hour, notificationMinute = :minute WHERE id = 1;
