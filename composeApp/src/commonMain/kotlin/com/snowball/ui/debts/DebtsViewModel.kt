@@ -4,9 +4,11 @@ import com.snowball.data.Repos
 import com.snowball.data.model.Category
 import com.snowball.data.model.Debt
 
+data class DebtRow(val debt: Debt, val paymentsMade: Int)
+
 data class DebtsState(
     val categories: List<Category>,
-    val debtsByCategory: Map<Long, List<Debt>>,
+    val debtsByCategory: Map<Long, List<DebtRow>>,
     val showArchived: Boolean,
 )
 
@@ -18,6 +20,9 @@ class DebtsViewModel(private val repos: Repos) {
         val cats = repos.categories.all()
         val all = if (showArchived) repos.debts.all().filter { it.isArchived } else repos.debts.allActive()
         val grouped = all.groupBy { it.categoryId }
+            .mapValues { (_, debts) ->
+                debts.map { d -> DebtRow(d, repos.payments.countForDebt(d.id)) }
+            }
         return DebtsState(cats, grouped, showArchived)
     }
 

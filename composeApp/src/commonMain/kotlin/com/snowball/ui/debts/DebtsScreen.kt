@@ -16,7 +16,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.components.PesoText
@@ -51,12 +57,23 @@ fun DebtsScreen(
                     color = SnowColors.Frost,
                     modifier = Modifier.weight(1f),
                 )
-                Text(
-                    if (state.showArchived) "View active" else "View archived",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = SnowColors.Ice,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { vm.toggleArchive(); tick++ },
-                )
+                ) {
+                    Text(
+                        if (state.showArchived) "View active" else "View archived",
+                        style = MaterialTheme.typography.labelMedium.copy(textDecoration = TextDecoration.Underline),
+                        color = SnowColors.Ice,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = SnowColors.Ice,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -65,7 +82,7 @@ fun DebtsScreen(
                 val debts = state.debtsByCategory[cat.id].orEmpty()
                 if (debts.isEmpty()) return@forEach
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         imageVector = cat.icon(),
                         contentDescription = null,
                         tint = SnowColors.FrostDim,
@@ -79,7 +96,8 @@ fun DebtsScreen(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                debts.forEach { d ->
+                debts.forEach { row ->
+                    val d = row.debt
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -87,16 +105,23 @@ fun DebtsScreen(
                             .background(SnowColors.CardElev)
                             .clickable { onEdit(d.id) }
                             .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(d.name, style = MaterialTheme.typography.headlineSmall, color = SnowColors.Frost)
                             Text(
-                                "Day ${d.dueDay} · ${d.totalPayments} months",
+                                d.name,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = SnowColors.Frost,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                "Day ${d.dueDay} · ${d.totalPayments} months · ${row.paymentsMade}/${d.totalPayments} paid",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = SnowColors.FrostMute,
                             )
                         }
+                        Spacer(Modifier.width(8.dp))
                         PesoText(
                             amount = d.monthlyAmount,
                             style = MaterialTheme.typography.headlineSmall,
@@ -133,7 +158,11 @@ fun DebtsScreen(
             containerColor = SnowColors.Ice,
             contentColor = SnowColors.Night,
         ) {
-            Text("+", style = MaterialTheme.typography.headlineLarge)
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "Add debt",
+                tint = SnowColors.Night,
+            )
         }
     }
 }
