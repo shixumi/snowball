@@ -28,6 +28,7 @@ import com.snowball.ui.util.formatMonthYear
 @Composable
 fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
     val meltedText = "₱${formatAmountWithSeparators(stats.totalMelted)} melted"
+    val meltedA11y = "${formatAmountWithSeparators(stats.totalMelted)} pesos melted"
     val forecastText = if (stats.forecastEndDate == null) "All clear ✓"
                        else "Free by ${formatMonthYear(stats.forecastEndDate)}"
 
@@ -38,7 +39,7 @@ fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
             .background(SnowColors.CardElev)
             .border(width = 1.dp, color = SnowColors.LineStrong, shape = RoundedCornerShape(28.dp))
             .semantics(mergeDescendants = true) {
-                contentDescription = "Your journey, ${stats.percentCleared} percent cleared, $meltedText, $forecastText"
+                contentDescription = "Your journey, ${stats.percentCleared} percent cleared, $meltedA11y, $forecastText"
             }
             .padding(horizontal = 24.dp, vertical = 24.dp),
     ) {

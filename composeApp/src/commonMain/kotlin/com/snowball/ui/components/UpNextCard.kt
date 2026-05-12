@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.domain.Cutoff
@@ -53,6 +54,7 @@ fun UpNextCard(
     val haptic = LocalHapticFeedback.current
     val rangeLabel = cutoffRangeLabel(cutoff)
     val stateDesc = if (isExpanded) "Expanded" else "Collapsed"
+    val debtLabel = if (rows.size == 1) "debt" else "debts"
 
     Column(
         modifier = modifier
@@ -67,7 +69,7 @@ fun UpNextCard(
             .semantics(mergeDescendants = true) {
                 role = Role.Button
                 stateDescription = stateDesc
-                contentDescription = "Up next, $rangeLabel, ${total.toLong()} pesos, ${rows.size} debts"
+                contentDescription = "Up next, $rangeLabel, ${total.toLong()} pesos, ${rows.size} $debtLabel"
             }
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
@@ -86,7 +88,7 @@ fun UpNextCard(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                "· ${rows.size} debts",
+                "· ${rows.size} $debtLabel",
                 style = MaterialTheme.typography.bodyMedium,
                 color = SnowColors.FrostMute,
                 modifier = Modifier.weight(1f),
@@ -136,6 +138,7 @@ private fun UpNextRow(row: DueRow) {
             style = MaterialTheme.typography.bodyMedium,
             color = SnowColors.Frost,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.width(12.dp))
