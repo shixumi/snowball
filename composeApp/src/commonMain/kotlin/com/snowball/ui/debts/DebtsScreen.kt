@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.DropdownMenu
@@ -66,12 +67,23 @@ fun DebtsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (state.showArchived) "Archived" else "Active",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = SnowColors.Frost,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AcUnit,
+                        contentDescription = null,
+                        tint = SnowColors.Frost,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        if (state.showArchived) "Archived" else "Active",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = SnowColors.Frost,
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { vm.toggleArchive(); tick++ },

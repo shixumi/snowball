@@ -1,6 +1,8 @@
 package com.snowball.ui.insights
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -11,6 +13,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,7 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,7 +64,18 @@ fun InsightsScreen(vm: InsightsViewModel) {
         containerColor = SnowColors.Night,
         topBar = {
             TopAppBar(
-                title = { Text("Insights", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.AcUnit,
+                            contentDescription = null,
+                            tint = SnowColors.Frost,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Insights", style = MaterialTheme.typography.titleLarge)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = SnowColors.Night,
                     titleContentColor = SnowColors.Frost,
@@ -200,11 +220,37 @@ private fun ForecastRow(f: CutoffForecast) {
             modifier = Modifier.weight(1f),
         )
         if (f.isAllClear) {
-            Text(
-                "All clear ✓",
-                style = MaterialTheme.typography.bodyLarge,
-                color = SnowColors.Ice,
+            var allClearVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { allClearVisible = true }
+            val allClearScale by animateFloatAsState(
+                targetValue = if (allClearVisible) 1f else 0.8f,
+                animationSpec = tween(400, easing = FastOutSlowInEasing),
+                label = "allClearScale",
             )
+            val allClearAlpha by animateFloatAsState(
+                targetValue = if (allClearVisible) 1f else 0f,
+                animationSpec = tween(400),
+                label = "allClearAlpha",
+            )
+            Row(
+                modifier = Modifier
+                    .scale(allClearScale)
+                    .alpha(allClearAlpha),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.AcUnit,
+                    contentDescription = null,
+                    tint = SnowColors.Ice,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "All clear",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = SnowColors.Ice,
+                )
+            }
         } else {
             Column(horizontalAlignment = Alignment.End) {
                 PesoText(

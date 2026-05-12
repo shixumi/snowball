@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -84,6 +85,21 @@ fun HomeScreen(vm: HomeViewModel) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Outlined.AcUnit,
+                contentDescription = null,
+                tint = SnowColors.Frost,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Snowball",
+                style = MaterialTheme.typography.titleLarge,
+                color = SnowColors.Frost,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
         CutoffCard(
             cutoff = state.cutoff,
             summary = state.summary,
