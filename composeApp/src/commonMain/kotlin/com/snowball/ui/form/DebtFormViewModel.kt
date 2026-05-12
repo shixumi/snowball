@@ -15,6 +15,7 @@ data class DebtFormState(
     val categoryId: Long? = null,
     val monthlyAmount: String = "",
     val totalPayments: String = "",
+    val paymentsAlreadyMade: String = "",
     val dueDay: String = "",
     val useLastDayOfMonth: Boolean = false,
     val startDate: LocalDate = today(),
@@ -32,6 +33,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 categoryId = existing.categoryId,
                 monthlyAmount = existing.monthlyAmount.toString(),
                 totalPayments = existing.totalPayments.toString(),
+                paymentsAlreadyMade = repos.payments.countForDebt(existing.id).toString(),
                 dueDay = existing.dueDay.toString(),
                 useLastDayOfMonth = existing.useLastDayOfMonth,
                 startDate = existing.startDate,
@@ -55,8 +57,10 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         val monthly = state.monthlyAmount.toDoubleOrNull() ?: return false
         val total = state.totalPayments.toIntOrNull() ?: return false
         val due = state.dueDay.toIntOrNull() ?: return false
+        val alreadyPaid = state.paymentsAlreadyMade.toIntOrNull() ?: 0
         val startDate = runCatching { LocalDate.parse(state.startDateText) }.getOrNull() ?: return false
         if (name.isBlank() || monthly <= 0.0 || total <= 0 || due !in 1..31) return false
+        if (alreadyPaid < 0 || alreadyPaid > total) return false
 
         if (existingId == null) {
             repos.debts.add(
@@ -69,6 +73,9 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 startDate = startDate,
                 notes = state.notes.ifBlank { null },
             )
+            val newId = repos.debts.all().first().id
+            backfillPayments(newId, monthly, startDate, alreadyPaid)
+            if (alreadyPaid >= total) repos.debts.setArchived(newId, true)
         } else {
             repos.debts.update(
                 id = existingId,
@@ -81,6 +88,9 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 startDate = startDate,
                 notes = state.notes.ifBlank { null },
             )
+            reconcilePayments(existingId, monthly, startDate, alreadyPaid)
+            if (alreadyPaid >= total) repos.debts.setArchived(existingId, true)
+            else if (repos.debts.byId(existingId)?.isArchived == true) repos.debts.setArchived(existingId, false)
         }
         return true
     }
@@ -89,5 +99,27 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         val id = existingId ?: return false
         repos.debts.delete(id)
         return true
+    }
+
+    /** Insert N synthetic payments dated at the start so they count toward paymentsMade. */
+    private fun backfillPayments(debtId: Long, monthly: Double, startDate: LocalDate, count: Int) {
+        repeat(count) {
+            repos.payments.markPaid(debtId, startDate, monthly)
+        }
+    }
+
+    /** Adjust the recorded payment count to match `alreadyPaid` by adding or removing rows. */
+    private fun reconcilePayments(debtId: Long, monthly: Double, startDate: LocalDate, alreadyPaid: Int) {
+        val current = repos.payments.countForDebt(debtId)
+        when {
+            current < alreadyPaid -> repeat(alreadyPaid - current) {
+                repos.payments.markPaid(debtId, startDate, monthly)
+            }
+            current > alreadyPaid -> {
+                val history = repos.payments.historyForDebt(debtId)
+                val toRemove = current - alreadyPaid
+                history.take(toRemove).forEach { repos.payments.delete(it.id) }
+            }
+        }
     }
 }

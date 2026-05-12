@@ -103,6 +103,25 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
         }
         Spacer(Modifier.height(16.dp))
 
+        Field("Payments already made (optional)") {
+            OutlinedTextField(
+                value = state.paymentsAlreadyMade,
+                onValueChange = { v -> vm.update { it.copy(paymentsAlreadyMade = v.filter { c -> c.isDigit() }) } },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = { Text("0", color = SnowColors.FrostDeep) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors(),
+                shape = RoundedCornerShape(12.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Use this to import a debt mid-way. Backfills payment history.",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Switch(
                 checked = state.useLastDayOfMonth,
