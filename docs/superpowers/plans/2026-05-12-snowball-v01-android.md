@@ -7,11 +7,12 @@
 **Architecture:** Compose Multiplatform project with the Android target only in v0.1. A single shared module (`composeApp`) keeps UI and logic in `commonMain` so future iOS/macOS/Windows targets drop in without rewrite. SQLDelight provides type-safe SQLite. State is hoisted into screen-level ViewModels backed by Kotlin coroutine `StateFlow`. No DI library — manual factories. No DRY abstraction work beyond what the screens demand.
 
 **Tech Stack:**
-- Kotlin 2.0.21
-- Compose Multiplatform 1.7.3
+- Kotlin 2.1.20
+- Compose Multiplatform 1.8.0
 - SQLDelight 2.0.2 (Android driver)
-- Android Gradle Plugin 8.7.x, Gradle 8.10.x, JDK 17
+- Android Gradle Plugin 8.11.x, Gradle 8.13.x, JDK 21 (bundled with Android Studio Panda)
 - kotlinx-datetime 0.6.1, kotlinx-coroutines 1.9.0
+- Target: Android API 36 (Android 16) — user's daily driver is a Samsung S25
 - Fonts: Fraunces (variable, OFL) and DM Sans (variable, OFL) — bundled
 
 **Spec reference:** `docs/superpowers/specs/2026-05-12-snowball-design.md`
@@ -139,17 +140,16 @@ Create `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
-kotlin = "2.0.21"
-agp = "8.7.2"
-compose-multiplatform = "1.7.3"
-compose-bom = "2024.11.00"
+kotlin = "2.1.20"
+agp = "8.11.0"
+compose-multiplatform = "1.8.0"
 androidx-activity-compose = "1.9.3"
 sqldelight = "2.0.2"
 kotlinx-datetime = "0.6.1"
 kotlinx-coroutines = "1.9.0"
 android-min-sdk = "26"
-android-target-sdk = "34"
-android-compile-sdk = "34"
+android-target-sdk = "36"
+android-compile-sdk = "36"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
@@ -240,7 +240,7 @@ plugins {
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
     }
 
     sourceSets {
@@ -293,8 +293,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 

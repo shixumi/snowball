@@ -4,8 +4,8 @@ One-time setup so the Snowball v0.1 plan can be executed.
 
 ## What you'll have when done
 
-- **JDK 17** (bundled inside Android Studio as JBR — JetBrains Runtime)
-- **Android SDK** (API 34 platform, build tools, command-line tools, platform-tools)
+- **JDK 21** (bundled inside Android Studio Panda as JBR — JetBrains Runtime)
+- **Android SDK** (API 36 platform, build tools, command-line tools, platform-tools)
 - **Android Emulator** with a Pixel-class AVD
 - **Gradle** (used by Android Studio internally and via the project's `gradlew` wrapper)
 - `java`, `adb`, `emulator` on PATH; `JAVA_HOME` and `ANDROID_HOME` env vars set
@@ -28,15 +28,15 @@ In the wizard:
 4. **License Agreement:** accept all licenses
 5. Click **Finish** — components download (~1–2 GB)
 
-## Step 3 — Add API 34 platform
+## Step 3 — Add API 36 platform
 
 From the welcome screen:
 1. **More Actions → SDK Manager** (or in the IDE: **Settings → Languages & Frameworks → Android SDK**)
 2. **SDK Platforms** tab:
-   - Check **Android 14.0 ("UpsideDownCake") — API Level 34**
+   - Check **Android 16 ("Baklava") — API Level 34**
    - Click **Apply**, accept the license
 3. **SDK Tools** tab — confirm these are checked:
-   - ✅ Android SDK Build-Tools 34
+   - ✅ Android SDK Build-Tools 36
    - ✅ Android Emulator
    - ✅ Android SDK Platform-Tools
    - ✅ Android SDK Command-line Tools (latest)
@@ -48,7 +48,7 @@ From the welcome screen:
 1. **More Actions → Virtual Device Manager** (or in IDE: **Tools → Device Manager**)
 2. Click **Create Device**
 3. Pick **Pixel 7** (or any modern phone)
-4. **System Image:** pick **API 34 (Tiramisu)** — download if needed
+4. **System Image:** pick **API 36 (Tiramisu)** — download if needed
 5. **Finish** → click ▶ to boot it once and confirm it lands at the Android home screen
 
 ## Step 5 — Set environment variables
@@ -70,7 +70,7 @@ $additions = "$env:LOCALAPPDATA\Android\Sdk\platform-tools;$env:LOCALAPPDATA\And
 Open a **new** terminal (PowerShell or bash) and run:
 
 ```bash
-java -version      # expect: openjdk 17.x (JetBrains Runtime)
+java -version      # expect: openjdk 21.x (JetBrains Runtime)
 adb version        # expect: Android Debug Bridge version 1.0.x
 emulator -list-avds  # expect: at least one AVD listed
 ```
