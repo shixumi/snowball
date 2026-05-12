@@ -1,0 +1,2 @@
+-- Sentinel file so the SqlDelight plugin generates the SnowballDb class.
+-- Real tables live in Category.sq, Debt.sq, Payment.sq, Settings.sq.
