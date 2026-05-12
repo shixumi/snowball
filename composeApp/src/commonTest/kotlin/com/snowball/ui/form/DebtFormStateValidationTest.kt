@@ -77,5 +77,13 @@ class DebtFormStateValidationTest {
         assertTrue(s.isTotalPaymentsValid())
         assertFalse(s.isDueDayValid())
         assertTrue(s.isPaymentsAlreadyMadeValid())
+        assertTrue(s.isStartDateValid())
+    }
+
+    @Test
+    fun unparseableStartDateInvalid() {
+        assertFalse(validState().copy(startDateText = "not a date").isValid())
+        assertFalse(validState().copy(startDateText = "").isValid())
+        assertTrue(validState().copy(startDateText = "2026-05-12").isValid())
     }
 }

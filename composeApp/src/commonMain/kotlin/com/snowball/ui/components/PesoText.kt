@@ -47,7 +47,7 @@ fun PesoText(
 
 private fun formatAmount(amount: Double): String {
     val whole = amount.toLong()
-    val fraction = ((amount - whole) * 100).toInt().let { if (it < 0) -it else it }
+    val fraction = ((kotlin.math.abs(amount) - kotlin.math.abs(whole)) * 100 + 0.5).toInt()
     val wholeStr = whole.toString()
         .reversed()
         .chunked(3)

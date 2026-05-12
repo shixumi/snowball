@@ -38,13 +38,17 @@ fun DebtFormState.isPaymentsAlreadyMadeValid(): Boolean {
     return already >= 0 && already <= total
 }
 
+fun DebtFormState.isStartDateValid(): Boolean =
+    runCatching { kotlinx.datetime.LocalDate.parse(startDateText) }.isSuccess
+
 fun DebtFormState.isValid(): Boolean =
     isNameValid() &&
         isCategoryValid() &&
         isMonthlyAmountValid() &&
         isTotalPaymentsValid() &&
         isDueDayValid() &&
-        isPaymentsAlreadyMadeValid()
+        isPaymentsAlreadyMadeValid() &&
+        isStartDateValid()
 
 class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
     var state: DebtFormState by mutableStateOf(
