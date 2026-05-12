@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.snowball.domain.Cutoff
 import com.snowball.domain.CutoffCalculator
 import com.snowball.ui.theme.SnowColors
+import kotlin.math.abs
 
 @Composable
 fun CutoffCard(
@@ -61,7 +62,7 @@ fun CutoffCard(
             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
             color = SnowColors.FrostDim,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         PesoText(
             amount = summary.dueTotal,
             style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.W300),
@@ -69,14 +70,20 @@ fun CutoffCard(
             numberColor = SnowColors.Frost,
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
             horizontalArrangement = Arrangement.spacedBy(1.dp),
         ) {
             LedgerCell(label = "INCOME", amount = incomePerCutoff, color = SnowColors.Frost, modifier = Modifier.weight(1f))
-            LedgerCell(label = "LEFT OVER", amount = summary.breathingRoom, color = SnowColors.Ice, modifier = Modifier.weight(1f))
+            val isShort = summary.breathingRoom < 0
+            LedgerCell(
+                label = if (isShort) "SHORT BY" else "LEFT OVER",
+                amount = abs(summary.breathingRoom),
+                color = if (isShort) SnowColors.Ember else SnowColors.Ice,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
