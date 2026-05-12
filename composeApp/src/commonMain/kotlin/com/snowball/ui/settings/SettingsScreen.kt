@@ -6,28 +6,54 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.toFormFieldString
+import kotlinx.coroutines.delay
+
+private fun Double.toFormattedPeso(): String {
+    if (this == 0.0) return ""
+    val whole = this.toLong()
+    val grouped = whole.toString().reversed().chunked(3).joinToString(",").reversed()
+    val frac = ((this - whole) * 100 + 0.5).toInt()
+    return if (frac == 0) "₱$grouped" else "₱$grouped.${frac.toString().padStart(2, '0')}"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
     val initial = remember { vm.load() }
-    var income by remember { mutableStateOf(initial.incomePerCutoff.toString()) }
+    var rawInput by remember { mutableStateOf(initial.incomePerCutoff.toFormFieldString()) }
+    var hasFocus by remember { mutableStateOf(false) }
+    var lastCommitted by remember { mutableStateOf(initial.incomePerCutoff) }
+    var ackVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ackVisible) {
+        if (ackVisible) {
+            delay(1500)
+            ackVisible = false
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineLarge, color = SnowColors.Frost)
@@ -39,14 +65,46 @@ fun SettingsScreen(vm: SettingsViewModel) {
             color = SnowColors.FrostDim,
         )
         Spacer(Modifier.height(8.dp))
+
+        val displayValue = if (hasFocus) {
+            rawInput
+        } else {
+            (rawInput.toDoubleOrNull() ?: 0.0).toFormattedPeso()
+        }
+
         OutlinedTextField(
-            value = income,
+            value = displayValue,
             onValueChange = { v ->
-                income = v.filter { c -> c.isDigit() || c == '.' }
-                income.toDoubleOrNull()?.let { vm.setIncome(it) }
+                if (hasFocus) {
+                    rawInput = v.filter { c -> c.isDigit() || c == '.' }
+                }
             },
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("₱ 0", color = SnowColors.FrostDim) },
+            trailingIcon = {
+                if (ackVisible) {
+                    Icon(
+                        imageVector = Icons.Outlined.Check,
+                        contentDescription = "Saved",
+                        tint = SnowColors.Ice,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    val wasFocused = hasFocus
+                    hasFocus = focusState.isFocused
+                    if (wasFocused && !focusState.isFocused) {
+                        val parsed = rawInput.toDoubleOrNull() ?: 0.0
+                        if (parsed != lastCommitted) {
+                            vm.setIncome(parsed)
+                            lastCommitted = parsed
+                            ackVisible = true
+                        }
+                    }
+                },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = SnowColors.Frost,
                 unfocusedTextColor = SnowColors.Frost,
@@ -67,7 +125,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
         Text(
             "Snowball v0.1",
             style = MaterialTheme.typography.labelSmall,
-            color = SnowColors.FrostDeep,
+            color = SnowColors.FrostMute,
         )
     }
 }
