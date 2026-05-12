@@ -4,7 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,9 +45,15 @@ fun App(repos: Repos) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .systemBarsPadding()
+                .statusBarsPadding()
         ) {
-            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+            val isTabs = route is Route.Tabs
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .then(if (isTabs) Modifier else Modifier.navigationBarsPadding())
+            ) {
                 when (val r = route) {
                     is Route.Tabs -> {
                         when (tab) {
@@ -73,7 +80,7 @@ fun App(repos: Repos) {
                     }
                 }
             }
-            if (route is Route.Tabs) {
+            if (isTabs) {
                 BottomNav(selected = tab, onSelect = { tab = it })
             }
         }

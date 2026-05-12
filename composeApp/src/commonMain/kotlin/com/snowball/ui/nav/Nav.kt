@@ -5,10 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.ReceiptLong
@@ -36,35 +39,37 @@ fun BottomNav(
     onSelect: (Tab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(SnowColors.NightElev)
-            .padding(vertical = 10.dp),
+            .background(SnowColors.NightElev),
     ) {
-        Tab.entries.forEach { tab ->
-            val active = tab == selected
-            val tint = if (active) SnowColors.Frost else SnowColors.FrostDim
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onSelect(tab) }
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    imageVector = tab.icon,
-                    contentDescription = tab.label,
-                    tint = tint,
-                    modifier = Modifier.size(22.dp),
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    tab.label,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.2.sp),
-                    color = tint,
-                )
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+            Tab.entries.forEach { tab ->
+                val active = tab == selected
+                val tint = if (active) SnowColors.Frost else SnowColors.FrostDim
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelect(tab) }
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.label,
+                        tint = tint,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        tab.label,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.2.sp),
+                        color = tint,
+                    )
+                }
             }
         }
+        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
