@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,7 +40,12 @@ fun App(repos: Repos) {
         val homeVm = remember(refreshKey) { HomeViewModel(repos) }
         val debtsVm = remember(refreshKey) { DebtsViewModel(repos) }
 
-        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .systemBarsPadding()
+        ) {
             Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                 when (val r = route) {
                     is Route.Tabs -> {

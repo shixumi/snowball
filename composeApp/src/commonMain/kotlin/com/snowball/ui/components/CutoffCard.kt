@@ -76,7 +76,7 @@ fun CutoffCard(
             horizontalArrangement = Arrangement.spacedBy(1.dp),
         ) {
             LedgerCell(label = "INCOME", amount = incomePerCutoff, color = SnowColors.Frost, modifier = Modifier.weight(1f))
-            LedgerCell(label = "BREATHING ROOM", amount = summary.breathingRoom, color = SnowColors.Ice, modifier = Modifier.weight(1f))
+            LedgerCell(label = "LEFT OVER", amount = summary.breathingRoom, color = SnowColors.Ice, modifier = Modifier.weight(1f))
         }
     }
 }
