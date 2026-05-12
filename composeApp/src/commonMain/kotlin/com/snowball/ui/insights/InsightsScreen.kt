@@ -1,5 +1,9 @@
 package com.snowball.ui.insights
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,7 +70,9 @@ fun InsightsScreen(vm: InsightsViewModel) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
-            SnapshotCard(stats = state.snapshot)
+            StaggeredItem(index = 0) {
+                SnapshotCard(stats = state.snapshot)
+            }
             Spacer(Modifier.height(24.dp))
             Text(
                 "UPCOMING (NEXT 6 MONTHS)",
@@ -71,20 +81,27 @@ fun InsightsScreen(vm: InsightsViewModel) {
             )
             Spacer(Modifier.height(12.dp))
             if (state.forecast.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(40.dp),
-                    contentAlignment = Alignment.Center,
+                var emptyVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { emptyVisible = true }
+                AnimatedVisibility(
+                    visible = emptyVisible,
+                    enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 },
                 ) {
-                    Text(
-                        "No upcoming debts in your forecast window.",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-                        color = SnowColors.FrostDim,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(40.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "No upcoming debts in your forecast window.",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                            color = SnowColors.FrostDim,
+                        )
+                    }
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.forecast.forEachIndexed { i, f ->
-                        StaggeredItem(index = i) {
+                        StaggeredItem(index = i + 1) {
                             ForecastRow(f)
                         }
                     }

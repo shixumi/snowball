@@ -1,5 +1,9 @@
 package com.snowball.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -144,7 +148,14 @@ fun HomeScreen(vm: HomeViewModel) {
                 state.income == 0.0 -> "Start by setting your income in Settings."
                 else -> "No payments due this cutoff yet.\nAdd debts from the Debts tab."
             }
-            EmptyHint(message)
+            var emptyVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { emptyVisible = true }
+            AnimatedVisibility(
+                visible = emptyVisible,
+                enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 4 },
+            ) {
+                EmptyHint(message)
+            }
         } else {
             state.rows.forEachIndexed { i, row ->
                 key(row.debt.id) {
