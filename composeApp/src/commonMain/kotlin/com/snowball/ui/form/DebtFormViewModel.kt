@@ -145,24 +145,47 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         return true
     }
 
-    /** Insert N synthetic payments dated at the first-payment date so they count toward paymentsMade. */
-    private fun backfillPayments(debtId: Long, monthly: Double, anchorDate: LocalDate, count: Int) {
-        repeat(count) {
-            repos.payments.markPaid(debtId, anchorDate, monthly)
+    /**
+     * Insert N synthetic payments distributed across the first N cycle months,
+     * so each payment falls within its own cutoff window. Without this distribution
+     * the cutoff calculator can't tell which cycles are paid (it looks at paidDate
+     * vs cutoff window), causing fully-paid debts to keep appearing in "due this
+     * cutoff" lists.
+     */
+    private fun backfillPayments(debtId: Long, monthly: Double, firstPaymentDate: LocalDate, count: Int) {
+        repeat(count) { i ->
+            val date = firstPaymentDate.plus(i, DateTimeUnit.MONTH)
+            repos.payments.markPaid(debtId, date, monthly)
         }
     }
 
-    /** Adjust the recorded payment count to match `alreadyPaid` by adding or removing rows. */
-    private fun reconcilePayments(debtId: Long, monthly: Double, anchorDate: LocalDate, alreadyPaid: Int) {
-        val current = repos.payments.countForDebt(debtId)
+    /**
+     * Adjust the recorded payment count to match `alreadyPaid`.
+     * Adds at distributed cycle dates; removes oldest rows when shrinking.
+     * Also redistributes legacy uniform-date backfills (all rows share the same
+     * paidDate) so existing data created before this fix gets healed on save.
+     */
+    private fun reconcilePayments(debtId: Long, monthly: Double, firstPaymentDate: LocalDate, alreadyPaid: Int) {
+        val history = repos.payments.historyForDebt(debtId)
+        val currentCount = history.size
+        val isUniformBackfill = currentCount > 1 && history.all { it.paidDate == history.first().paidDate }
+
         when {
-            current < alreadyPaid -> repeat(alreadyPaid - current) {
-                repos.payments.markPaid(debtId, anchorDate, monthly)
+            currentCount < alreadyPaid -> {
+                for (i in currentCount until alreadyPaid) {
+                    val date = firstPaymentDate.plus(i, DateTimeUnit.MONTH)
+                    repos.payments.markPaid(debtId, date, monthly)
+                }
             }
-            current > alreadyPaid -> {
-                val history = repos.payments.historyForDebt(debtId)
-                val toRemove = current - alreadyPaid
-                history.take(toRemove).forEach { repos.payments.delete(it.id) }
+            currentCount > alreadyPaid -> {
+                history.take(currentCount - alreadyPaid).forEach { repos.payments.delete(it.id) }
+            }
+            isUniformBackfill && alreadyPaid > 0 -> {
+                history.forEach { repos.payments.delete(it.id) }
+                for (i in 0 until alreadyPaid) {
+                    val date = firstPaymentDate.plus(i, DateTimeUnit.MONTH)
+                    repos.payments.markPaid(debtId, date, monthly)
+                }
             }
         }
     }
