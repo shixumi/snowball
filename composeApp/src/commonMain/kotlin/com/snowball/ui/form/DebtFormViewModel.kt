@@ -8,6 +8,7 @@ import com.snowball.data.model.Category
 import com.snowball.data.model.CategoryBehavior
 import com.snowball.data.model.Debt
 import com.snowball.domain.today
+import com.snowball.ui.util.toFormFieldString
 import kotlinx.datetime.LocalDate
 
 data class DebtFormState(
@@ -53,7 +54,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
             DebtFormState(
                 name = existing.name,
                 categoryId = existing.categoryId,
-                monthlyAmount = existing.monthlyAmount.toString(),
+                monthlyAmount = existing.monthlyAmount.toFormFieldString(),
                 totalPayments = existing.totalPayments.toString(),
                 paymentsAlreadyMade = repos.payments.countForDebt(existing.id).toString(),
                 dueDay = existing.dueDay.toString(),
@@ -68,6 +69,8 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
 
     private val existingId: Long? = existing?.id
     val isEditing: Boolean = existingId != null
+    val recordedPayments: Int = existing?.let { repos.payments.countForDebt(it.id) } ?: 0
+    val originalTotalPayments: Int = existing?.totalPayments ?: 0
 
     val categories: List<Category> = repos.categories.all().filter { it.behavior == CategoryBehavior.SCHEDULED }
 
