@@ -45,8 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.domain.DueRow
 import com.snowball.ui.components.CutoffCard
+import com.snowball.ui.components.JourneyCard
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
+import com.snowball.ui.components.UpNextCard
 import com.snowball.ui.theme.SnowColors
 
 @Composable
@@ -62,6 +64,18 @@ fun HomeScreen(vm: HomeViewModel) {
             summary = state.summary,
             incomePerCutoff = state.income,
         )
+
+        if (state.nextRows.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            var upNextExpanded by remember { mutableStateOf(false) }
+            UpNextCard(
+                cutoff = state.nextCutoff,
+                rows = state.nextRows,
+                total = state.nextTotal,
+                isExpanded = upNextExpanded,
+                onToggle = { upNextExpanded = !upNextExpanded },
+            )
+        }
 
         Spacer(Modifier.height(24.dp))
         Text(
@@ -94,6 +108,11 @@ fun HomeScreen(vm: HomeViewModel) {
                 }
             }
             Spacer(Modifier.height(16.dp))
+        }
+
+        if (state.journey != null) {
+            Spacer(Modifier.height(24.dp))
+            JourneyCard(stats = state.journey)
         }
     }
 }
