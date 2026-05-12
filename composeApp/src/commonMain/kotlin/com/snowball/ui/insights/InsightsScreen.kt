@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.snowball.domain.CutoffForecast
 import com.snowball.domain.SnapshotStats
 import com.snowball.ui.components.PesoText
+import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.cutoffRangeLabel
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
@@ -82,8 +83,10 @@ fun InsightsScreen(vm: InsightsViewModel) {
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    state.forecast.forEach { f ->
-                        ForecastRow(f)
+                    state.forecast.forEachIndexed { i, f ->
+                        StaggeredItem(index = i) {
+                            ForecastRow(f)
+                        }
                     }
                 }
             }

@@ -56,6 +56,7 @@ import com.snowball.ui.components.CutoffCard
 import com.snowball.ui.components.JourneyCard
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
+import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.UpNextCard
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
@@ -145,13 +146,15 @@ fun HomeScreen(vm: HomeViewModel) {
             }
             EmptyHint(message)
         } else {
-            state.rows.forEach { row ->
+            state.rows.forEachIndexed { i, row ->
                 key(row.debt.id) {
-                    SwipeablePaymentRow(
-                        row = row,
-                        onMarkPaid = { vm.markPaid(row); tick++ },
-                        onUndo = { vm.undoPayment(row); tick++ },
-                    )
+                    StaggeredItem(index = i) {
+                        SwipeablePaymentRow(
+                            row = row,
+                            onMarkPaid = { vm.markPaid(row); tick++ },
+                            onUndo = { vm.undoPayment(row); tick++ },
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(16.dp))
