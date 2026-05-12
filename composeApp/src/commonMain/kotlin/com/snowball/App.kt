@@ -16,10 +16,14 @@ import androidx.compose.ui.Modifier
 import com.snowball.data.Repos
 import com.snowball.ui.debts.DebtsScreen
 import com.snowball.ui.debts.DebtsViewModel
+import com.snowball.ui.detail.DebtDetailScreen
+import com.snowball.ui.detail.DebtDetailViewModel
 import com.snowball.ui.form.DebtFormScreen
 import com.snowball.ui.form.DebtFormViewModel
 import com.snowball.ui.home.HomeScreen
 import com.snowball.ui.home.HomeViewModel
+import com.snowball.ui.misc.MiscFormScreen
+import com.snowball.ui.misc.MiscFormViewModel
 import com.snowball.ui.nav.BottomNav
 import com.snowball.ui.nav.Tab
 import com.snowball.ui.settings.SettingsScreen
@@ -29,6 +33,8 @@ import com.snowball.ui.theme.SnowballTheme
 sealed interface Route {
     data object Tabs : Route
     data class Form(val existingDebtId: Long?) : Route
+    data class DebtDetail(val debtId: Long) : Route
+    data object MiscForm : Route
 }
 
 @Composable
@@ -61,8 +67,8 @@ fun App(repos: Repos) {
                             Tab.Debts -> DebtsScreen(
                                 vm = debtsVm,
                                 onAddDebt = { route = Route.Form(null) },
-                                onAddMisc = { /* TODO Task 9 */ },
-                                onOpenDebt = { id -> route = Route.Form(id) },
+                                onAddMisc = { route = Route.MiscForm },
+                                onOpenDebt = { id -> route = Route.DebtDetail(id) },
                             )
                             Tab.Settings -> {
                                 val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
@@ -79,6 +85,22 @@ fun App(repos: Repos) {
                             onSaved = { route = Route.Tabs; refreshKey++ },
                         )
                     }
+                    is Route.DebtDetail -> {
+                        val detailVm = remember(r.debtId, refreshKey) { DebtDetailViewModel(repos, r.debtId) }
+                        DebtDetailScreen(
+                            vm = detailVm,
+                            onBack = { route = Route.Tabs; refreshKey++ },
+                            onEdit = { id -> route = Route.Form(id) },
+                        )
+                    }
+                    is Route.MiscForm -> {
+                        val miscVm = remember { MiscFormViewModel(repos) }
+                        MiscFormScreen(
+                            vm = miscVm,
+                            onCancel = { route = Route.Tabs },
+                            onSaved = { route = Route.Tabs; refreshKey++ },
+                        )
+                    }
                 }
             }
             if (isTabs) {
@@ -87,4 +109,3 @@ fun App(repos: Repos) {
         }
     }
 }
-
