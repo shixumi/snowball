@@ -44,6 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -292,7 +294,12 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                 Spacer(Modifier.height(16.dp))
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "Use last day of month, Feb adjusts"
+                },
+            ) {
                 Switch(
                     checked = state.useLastDayOfMonth,
                     onCheckedChange = { v -> vm.update { it.copy(useLastDayOfMonth = v) } },
@@ -363,7 +370,11 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
 
 @Composable
 private fun Field(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = label
+        },
+    ) {
         Text(
             label.uppercase(),
             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 3.sp),
