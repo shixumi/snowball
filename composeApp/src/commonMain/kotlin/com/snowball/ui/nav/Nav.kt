@@ -1,7 +1,12 @@
 package com.snowball.ui.nav
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,15 +24,21 @@ import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.ui.components.pressScale
 import com.snowball.ui.theme.SnowColors
 
 enum class Tab(val label: String, val icon: ImageVector) {
@@ -51,36 +62,51 @@ fun BottomNav(
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
             Tab.entries.forEach { tab ->
                 val active = tab == selected
-                val tint = if (active) SnowColors.Frost else SnowColors.FrostDim
+                val interactionSource = remember { MutableInteractionSource() }
+                val iconScale by animateFloatAsState(
+                    targetValue = if (active) 1.15f else 1f,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    label = "navIconScale",
+                )
+                val pillColor by animateColorAsState(
+                    targetValue = if (active) SnowColors.Ice.copy(alpha = 0.10f) else Color.Transparent,
+                    animationSpec = tween(200),
+                    label = "navPillColor",
+                )
+                val tintColor by animateColorAsState(
+                    targetValue = if (active) SnowColors.Frost else SnowColors.FrostDim,
+                    animationSpec = tween(200),
+                    label = "navTintColor",
+                )
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onSelect(tab) }
+                        .clickable(interactionSource = interactionSource, indication = LocalIndication.current) {
+                            onSelect(tab)
+                        }
+                        .pressScale(interactionSource)
                         .padding(vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Column(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(
-                                if (active) SnowColors.Ice.copy(alpha = 0.10f)
-                                else androidx.compose.ui.graphics.Color.Transparent
-                            )
+                            .background(pillColor)
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             imageVector = tab.icon,
                             contentDescription = tab.label,
-                            tint = tint,
-                            modifier = Modifier.size(22.dp),
+                            tint = tintColor,
+                            modifier = Modifier.size(22.dp).scale(iconScale),
                         )
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
                         tab.label,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.2.sp),
-                        color = tint,
+                        color = tintColor,
                     )
                 }
             }
