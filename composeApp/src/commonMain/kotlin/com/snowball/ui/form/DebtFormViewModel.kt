@@ -1,5 +1,8 @@
 package com.snowball.ui.form
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.snowball.data.Repos
 import com.snowball.data.model.Category
 import com.snowball.data.model.CategoryBehavior
@@ -19,20 +22,22 @@ data class DebtFormState(
 )
 
 class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
-    var state: DebtFormState = if (existing == null) {
-        DebtFormState()
-    } else {
-        DebtFormState(
-            name = existing.name,
-            categoryId = existing.categoryId,
-            monthlyAmount = existing.monthlyAmount.toString(),
-            totalPayments = existing.totalPayments.toString(),
-            dueDay = existing.dueDay.toString(),
-            useLastDayOfMonth = existing.useLastDayOfMonth,
-            startDate = existing.startDate,
-            notes = existing.notes.orEmpty(),
-        )
-    }
+    var state: DebtFormState by mutableStateOf(
+        if (existing == null) {
+            DebtFormState()
+        } else {
+            DebtFormState(
+                name = existing.name,
+                categoryId = existing.categoryId,
+                monthlyAmount = existing.monthlyAmount.toString(),
+                totalPayments = existing.totalPayments.toString(),
+                dueDay = existing.dueDay.toString(),
+                useLastDayOfMonth = existing.useLastDayOfMonth,
+                startDate = existing.startDate,
+                notes = existing.notes.orEmpty(),
+            )
+        }
+    )
         private set
 
     private val existingId: Long? = existing?.id
