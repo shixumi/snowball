@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import com.snowball.ui.theme.SnowColors
 enum class Tab(val label: String, val icon: ImageVector) {
     Home("Home", Icons.Outlined.AcUnit),
     Debts("Debts", Icons.Outlined.ReceiptLong),
+    Insights("Insights", Icons.Outlined.Insights),
     Settings("Settings", Icons.Outlined.Tune),
 }
 

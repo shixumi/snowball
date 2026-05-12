@@ -20,6 +20,8 @@ import com.snowball.ui.debts.DebtsScreen
 import com.snowball.ui.debts.DebtsViewModel
 import com.snowball.ui.detail.DebtDetailScreen
 import com.snowball.ui.detail.DebtDetailViewModel
+import com.snowball.ui.insights.InsightsScreen
+import com.snowball.ui.insights.InsightsViewModel
 import com.snowball.ui.form.DebtFormScreen
 import com.snowball.ui.form.DebtFormViewModel
 import com.snowball.ui.home.HomeScreen
@@ -80,6 +82,10 @@ fun App(repos: Repos) {
                                 onAddMisc = { route = Route.MiscForm },
                                 onOpenDebt = { id -> route = Route.DebtDetail(id) },
                             )
+                            Tab.Insights -> {
+                                val insightsVm = remember(refreshKey) { InsightsViewModel(repos) }
+                                InsightsScreen(insightsVm)
+                            }
                             Tab.Settings -> {
                                 val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
                                 SettingsScreen(
