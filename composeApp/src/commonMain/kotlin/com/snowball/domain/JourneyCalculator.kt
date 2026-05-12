@@ -12,6 +12,36 @@ data class JourneyStats(
     val forecastEndDate: LocalDate?,
 )
 
+/**
+ * Projects the date a debt's final payment will land, assuming on-time future payments.
+ * Returns null when totalPayments is non-positive or the projection produces an
+ * impossible date (e.g. dueDay 31 in a 30-day month with useLastDayOfMonth=false).
+ */
+fun projectedEndDate(debt: Debt): LocalDate? {
+    if (debt.totalPayments <= 0) return null
+    val endMonth = debt.startDate.plus(debt.totalPayments - 1, DateTimeUnit.MONTH)
+
+    // Try with the original settings first
+    var result = effectiveDueDate(
+        year = endMonth.year,
+        month = endMonth.monthNumber,
+        dueDay = debt.dueDay,
+        useLastDay = debt.useLastDayOfMonth,
+    )
+
+    // If the due day doesn't exist and useLastDay is false, try clamping
+    if (result == null && !debt.useLastDayOfMonth) {
+        result = effectiveDueDate(
+            year = endMonth.year,
+            month = endMonth.monthNumber,
+            dueDay = debt.dueDay,
+            useLastDay = true,
+        )
+    }
+
+    return result
+}
+
 object JourneyCalculator {
     fun compute(allDebts: List<Debt>, allPayments: List<Payment>): JourneyStats? {
         val totalMelted = allPayments.sumOf { it.amount }
@@ -25,30 +55,5 @@ object JourneyCalculator {
         val forecast = active.mapNotNull(::projectedEndDate).maxOrNull()
 
         return JourneyStats(percent, totalMelted, forecast)
-    }
-
-    private fun projectedEndDate(debt: Debt): LocalDate? {
-        if (debt.totalPayments <= 0) return null
-        val endMonth = debt.startDate.plus(debt.totalPayments - 1, DateTimeUnit.MONTH)
-
-        // Try with the original settings first
-        var result = effectiveDueDate(
-            year = endMonth.year,
-            month = endMonth.monthNumber,
-            dueDay = debt.dueDay,
-            useLastDay = debt.useLastDayOfMonth,
-        )
-
-        // If the due day doesn't exist and useLastDay is false, try clamping
-        if (result == null && !debt.useLastDayOfMonth) {
-            result = effectiveDueDate(
-                year = endMonth.year,
-                month = endMonth.monthNumber,
-                dueDay = debt.dueDay,
-                useLastDay = true,
-            )
-        }
-
-        return result
     }
 }
