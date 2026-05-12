@@ -23,6 +23,28 @@ data class DebtFormState(
     val notes: String = "",
 )
 
+fun DebtFormState.isNameValid(): Boolean = name.trim().isNotEmpty()
+fun DebtFormState.isCategoryValid(): Boolean = categoryId != null
+fun DebtFormState.isMonthlyAmountValid(): Boolean =
+    (monthlyAmount.toDoubleOrNull() ?: 0.0) > 0.0
+fun DebtFormState.isTotalPaymentsValid(): Boolean =
+    (totalPayments.toIntOrNull() ?: 0) in 1..600
+fun DebtFormState.isDueDayValid(): Boolean =
+    (dueDay.toIntOrNull() ?: 0) in 1..31
+fun DebtFormState.isPaymentsAlreadyMadeValid(): Boolean {
+    val already = paymentsAlreadyMade.toIntOrNull() ?: 0
+    val total = totalPayments.toIntOrNull() ?: 0
+    return already >= 0 && already <= total
+}
+
+fun DebtFormState.isValid(): Boolean =
+    isNameValid() &&
+        isCategoryValid() &&
+        isMonthlyAmountValid() &&
+        isTotalPaymentsValid() &&
+        isDueDayValid() &&
+        isPaymentsAlreadyMadeValid()
+
 class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
     var state: DebtFormState by mutableStateOf(
         if (existing == null) {
@@ -48,6 +70,8 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
     val isEditing: Boolean = existingId != null
 
     val categories: List<Category> = repos.categories.all().filter { it.behavior == CategoryBehavior.SCHEDULED }
+
+    val isValid: Boolean get() = state.isValid()
 
     fun update(transform: (DebtFormState) -> DebtFormState) { state = transform(state) }
 
