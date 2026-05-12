@@ -27,6 +27,7 @@ import com.snowball.ui.home.HomeViewModel
 import com.snowball.ui.misc.MiscFormScreen
 import com.snowball.ui.misc.MiscFormViewModel
 import com.snowball.ui.nav.BottomNav
+import com.snowball.ui.nav.SystemBackHandler
 import com.snowball.ui.nav.Tab
 import com.snowball.ui.settings.SettingsScreen
 import com.snowball.ui.settings.SettingsViewModel
@@ -49,6 +50,12 @@ fun App(repos: Repos) {
 
         val homeVm = remember(refreshKey) { HomeViewModel(repos) }
         val debtsVm = remember(refreshKey) { DebtsViewModel(repos) }
+
+        // Intercept system back to navigate within the app instead of exiting.
+        SystemBackHandler(enabled = route !is Route.Tabs) {
+            route = Route.Tabs
+            refreshKey++
+        }
 
         Column(
             modifier = Modifier

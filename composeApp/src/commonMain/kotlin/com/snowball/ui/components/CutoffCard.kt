@@ -72,17 +72,22 @@ fun CutoffCard(
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
-            horizontalArrangement = Arrangement.spacedBy(1.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
         ) {
-            LedgerCell(label = "INCOME", amount = incomePerCutoff, color = SnowColors.Frost, modifier = Modifier.weight(1f))
+            LedgerCell(
+                label = "INCOME",
+                amount = incomePerCutoff,
+                color = SnowColors.Frost,
+                modifier = Modifier.fillMaxWidth(),
+            )
             val isShort = summary.breathingRoom < 0
             LedgerCell(
                 label = if (isShort) "SHORT BY" else "LEFT OVER",
                 amount = abs(summary.breathingRoom),
                 color = if (isShort) SnowColors.Ember else SnowColors.Ice,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
