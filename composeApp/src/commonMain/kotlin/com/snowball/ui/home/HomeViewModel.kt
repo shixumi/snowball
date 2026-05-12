@@ -6,6 +6,8 @@ import com.snowball.domain.CutoffCalculator
 import com.snowball.domain.DueRow
 import com.snowball.domain.JourneyCalculator
 import com.snowball.domain.JourneyStats
+import com.snowball.domain.OverdueCalculator
+import com.snowball.domain.OverdueInfo
 import com.snowball.domain.currentCutoff
 import com.snowball.domain.nextCutoff
 import com.snowball.domain.today
@@ -20,6 +22,7 @@ data class HomeState(
     val nextRows: List<DueRow>,
     val nextTotal: Double,
     val journey: JourneyStats?,
+    val overdue: List<OverdueInfo>,
 )
 
 class HomeViewModel(private val repos: Repos) {
@@ -40,7 +43,8 @@ class HomeViewModel(private val repos: Repos) {
         val allPayments = allDebts.flatMap { repos.payments.historyForDebt(it.id) }
         val journey = JourneyCalculator.compute(allDebts, allPayments)
 
-        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey)
+        val overdue = OverdueCalculator.computeOverdue(debts, paymentsByDebt, today)
+        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey, overdue)
     }
 
     fun markPaid(row: DueRow, todayDate: LocalDate = today()) {
@@ -57,6 +61,16 @@ class HomeViewModel(private val repos: Repos) {
         repos.payments.delete(latest.id)
         if (row.debt.isArchived) {
             repos.debts.setArchived(row.debt.id, false)
+        }
+    }
+
+    fun catchUpOverdue(info: OverdueInfo, todayDate: LocalDate = today()) {
+        repeat(info.missedCycles) {
+            repos.payments.markPaid(info.debt.id, todayDate, info.debt.monthlyAmount)
+        }
+        val totalPayments = repos.payments.countForDebt(info.debt.id)
+        if (totalPayments >= info.debt.totalPayments) {
+            repos.debts.setArchived(info.debt.id, true)
         }
     }
 }
