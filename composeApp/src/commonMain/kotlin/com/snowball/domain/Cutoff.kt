@@ -62,3 +62,5 @@ fun currentCutoff(today: LocalDate): Cutoff {
         Cutoff(today.year, today.monthNumber, Payday.FIFTEENTH)
     }
 }
+
+fun nextCutoff(today: LocalDate = today()): Cutoff = currentCutoff(today).next()
