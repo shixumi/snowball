@@ -127,6 +127,7 @@ private fun SnapshotCard(stats: SnapshotStats) {
                 style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.W300),
                 pesoColor = SnowColors.FrostMute,
                 numberColor = SnowColors.Ice,
+                animate = true,
             )
             Spacer(Modifier.height(2.dp))
             Text(

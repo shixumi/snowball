@@ -68,6 +68,7 @@ fun CutoffCard(
             style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.W300),
             pesoColor = SnowColors.FrostMute,
             numberColor = SnowColors.Frost,
+            animate = true,
         )
 
         Spacer(Modifier.height(20.dp))
@@ -107,6 +108,7 @@ private fun LedgerCell(label: String, amount: Double, color: Color, modifier: Mo
             style = MaterialTheme.typography.headlineLarge,
             pesoColor = SnowColors.FrostDim,
             numberColor = color,
+            animate = true,
         )
     }
 }

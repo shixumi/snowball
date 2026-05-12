@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +53,13 @@ fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
             color = SnowColors.FrostDim,
         )
         Spacer(Modifier.height(12.dp))
+        val animatedPct by animateIntAsState(
+            targetValue = stats.percentCleared,
+            animationSpec = tween(600, easing = FastOutSlowInEasing),
+            label = "percentCleared",
+        )
         Text(
-            "${stats.percentCleared}%",
+            "$animatedPct%",
             style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.W300),
             color = SnowColors.Ice,
         )

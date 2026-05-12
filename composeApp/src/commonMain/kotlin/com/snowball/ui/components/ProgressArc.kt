@@ -1,7 +1,11 @@
 package com.snowball.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -20,6 +24,11 @@ fun ProgressArc(
     trackColor: Color = SnowColors.Line,
     arcColor: Color = SnowColors.Ice,
 ) {
+    val animated by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "progressArc",
+    )
     Canvas(modifier = modifier) {
         val stroke = strokeDp.toPx()
         val s = Size(size.toPx() - stroke, size.toPx() - stroke)
@@ -36,7 +45,7 @@ fun ProgressArc(
         drawArc(
             color = arcColor,
             startAngle = -90f,
-            sweepAngle = 360f * progress.coerceIn(0f, 1f),
+            sweepAngle = 360f * animated,
             useCenter = false,
             topLeft = topLeft,
             size = s,

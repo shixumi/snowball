@@ -1,5 +1,8 @@
 package com.snowball.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -7,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,8 +28,11 @@ import com.snowball.ui.util.formatAmountWithSeparators
 /**
  * Renders an amount as "₱ N,NNN.NN" where the ₱ glyph is smaller (0.55x) and
  * italic, bottom-aligned with the number. Auto-shrinks the font size to fit the
- * available horizontal width (from BoxWithConstraints) so long numbers never
- * wrap or get clipped — they just render slightly smaller.
+ * available horizontal width so long numbers never wrap or get clipped.
+ *
+ * When `animate = true`, the displayed value tweens (~600ms) toward `amount`
+ * on every change. Auto-shrink measurement uses the TARGET string so layout
+ * width stays stable during the tween.
  */
 @Composable
 fun PesoText(
@@ -35,11 +42,24 @@ fun PesoText(
     pesoColor: Color = SnowColors.FrostDim,
     numberColor: Color = MaterialTheme.colorScheme.onBackground,
     align: TextAlign = TextAlign.Start,
+    animate: Boolean = false,
 ) {
-    val formatted = formatAmountWithSeparators(amount)
+    val targetFormatted = formatAmountWithSeparators(amount)
+
+    val displayAmount = if (animate) {
+        val animated by animateFloatAsState(
+            targetValue = amount.toFloat(),
+            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+            label = "pesoCount",
+        )
+        animated.toDouble()
+    } else amount
+
+    val displayFormatted = if (animate) formatAmountWithSeparators(displayAmount) else targetFormatted
+
     BoxWithConstraints(
         modifier = modifier.semantics(mergeDescendants = true) {
-            contentDescription = "₱$formatted"
+            contentDescription = "₱$targetFormatted"
         },
     ) {
         val measurer = rememberTextMeasurer()
@@ -52,8 +72,10 @@ fun PesoText(
         )
         val numStyle = style.copy(color = numberColor)
 
+        // Measure against the TARGET string so the auto-shrink scale stays
+        // stable across animation frames.
         val pesoWidthPx = measurer.measure("₱", style = pesoStyle).size.width
-        val numberWidthPx = measurer.measure(formatted, style = numStyle).size.width
+        val numberWidthPx = measurer.measure(targetFormatted, style = numStyle).size.width
         val gapPx = with(density) { 2.dp.toPx() }
         val totalWidthPx = pesoWidthPx + gapPx + numberWidthPx
         val availablePx = constraints.maxWidth.toFloat()
@@ -70,7 +92,7 @@ fun PesoText(
         Row(verticalAlignment = Alignment.Bottom) {
             Text("₱", style = finalPesoStyle, maxLines = 1, softWrap = false)
             Spacer(Modifier.width(2.dp))
-            Text(formatted, style = finalNumStyle, maxLines = 1, softWrap = false)
+            Text(displayFormatted, style = finalNumStyle, maxLines = 1, softWrap = false)
         }
     }
 }

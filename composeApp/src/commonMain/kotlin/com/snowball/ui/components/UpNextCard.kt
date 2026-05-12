@@ -1,6 +1,9 @@
 package com.snowball.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,15 +22,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -52,6 +56,11 @@ fun UpNextCard(
     modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(200, easing = FastOutSlowInEasing),
+        label = "chevron",
+    )
     val rangeLabel = cutoffRangeLabel(cutoff)
     val stateDesc = if (isExpanded) "Expanded" else "Collapsed"
     val debtLabel = if (rows.size == 1) "debt" else "debts"
@@ -94,10 +103,10 @@ fun UpNextCard(
                 modifier = Modifier.weight(1f),
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                imageVector = Icons.Outlined.ExpandMore,
                 contentDescription = null,
                 tint = SnowColors.FrostMute,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).rotate(chevronRotation),
             )
         }
         AnimatedVisibility(
