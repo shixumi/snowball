@@ -119,4 +119,22 @@ class CutoffCalculatorTest {
         val total = rows.sumOf { it.amount }
         assertEquals(3500.0, total)
     }
+
+    @Test
+    fun summary_total_uses_all_owed_paid_or_not() {
+        val c = Cutoff(2026, 5, Payday.FIFTEENTH)
+        val d1 = debt(id = 1, dueDay = 17, monthly = 3000.0)
+        val d2 = debt(id = 2, dueDay = 19, monthly = 500.0)
+        val rows = CutoffCalculator.computeDueRows(
+            cutoff = c,
+            activeDebts = listOf(d1, d2),
+            paymentsByDebt = mapOf(
+                d1.id to listOf(Payment(1, d1.id, LocalDate(2026, 5, 17), 3000.0))
+            ),
+        )
+        val summary = CutoffCalculator.summarize(rows = rows, incomePerCutoff = 25000.0)
+        assertEquals(3500.0, summary.dueTotal)
+        assertEquals(21500.0, summary.breathingRoom)
+        assertEquals(3000.0, summary.paidTotal)
+    }
 }

@@ -45,6 +45,22 @@ object CutoffCalculator {
         return rows.sortedBy { it.effectiveDueDate }
     }
 
+    data class Summary(
+        val dueTotal: Double,
+        val paidTotal: Double,
+        val breathingRoom: Double,
+    )
+
+    fun summarize(rows: List<DueRow>, incomePerCutoff: Double): Summary {
+        val due = rows.sumOf { it.amount }
+        val paid = rows.filter { it.isPaidThisCycle }.sumOf { it.amount }
+        return Summary(
+            dueTotal = due,
+            paidTotal = paid,
+            breathingRoom = incomePerCutoff - due,
+        )
+    }
+
     private fun priorCycleDueDate(debt: Debt, current: LocalDate): LocalDate {
         val (py, pm) = if (current.monthNumber == 1) (current.year - 1) to 12 else current.year to (current.monthNumber - 1)
         val prior = effectiveDueDate(
