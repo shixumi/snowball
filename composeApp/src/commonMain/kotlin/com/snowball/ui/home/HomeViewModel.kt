@@ -4,7 +4,10 @@ import com.snowball.data.Repos
 import com.snowball.domain.Cutoff
 import com.snowball.domain.CutoffCalculator
 import com.snowball.domain.DueRow
+import com.snowball.domain.JourneyCalculator
+import com.snowball.domain.JourneyStats
 import com.snowball.domain.currentCutoff
+import com.snowball.domain.nextCutoff
 import com.snowball.domain.today
 import kotlinx.datetime.LocalDate
 
@@ -13,6 +16,10 @@ data class HomeState(
     val rows: List<DueRow>,
     val summary: CutoffCalculator.Summary,
     val income: Double,
+    val nextCutoff: Cutoff,
+    val nextRows: List<DueRow>,
+    val nextTotal: Double,
+    val journey: JourneyStats?,
 )
 
 class HomeViewModel(private val repos: Repos) {
@@ -24,7 +31,16 @@ class HomeViewModel(private val repos: Repos) {
         val rows = CutoffCalculator.computeDueRows(cutoff, debts, paymentsByDebt)
         val income = repos.settings.get().incomePerCutoff
         val summary = CutoffCalculator.summarize(rows, income)
-        return HomeState(cutoff, rows, summary, income)
+
+        val next = nextCutoff(today)
+        val nextRows = CutoffCalculator.computeDueRows(next, debts, paymentsByDebt)
+        val nextTotal = nextRows.sumOf { it.amount }
+
+        val allDebts = repos.debts.all()
+        val allPayments = allDebts.flatMap { repos.payments.historyForDebt(it.id) }
+        val journey = JourneyCalculator.compute(allDebts, allPayments)
+
+        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey)
     }
 
     fun markPaid(row: DueRow, todayDate: LocalDate = today()) {
