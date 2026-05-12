@@ -7,4 +7,5 @@ data class Category(
     val name: String,
     val isSystem: Boolean,
     val behavior: CategoryBehavior,
+    val iconKey: String,
 )

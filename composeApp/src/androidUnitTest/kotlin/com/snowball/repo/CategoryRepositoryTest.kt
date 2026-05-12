@@ -14,8 +14,8 @@ class CategoryRepositoryTest {
         SnowballDb.Schema.create(driver)
         val db = SnowballDb(driver)
         val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
-        db.categoryQueries.insertOrIgnore("Credit Card", 1, "SCHEDULED", now)
-        db.categoryQueries.insertOrIgnore("MISC", 1, "LEDGER", now)
+        db.categoryQueries.insertOrIgnore("Credit Card", 1, "SCHEDULED", "credit_card", now)
+        db.categoryQueries.insertOrIgnore("MISC", 1, "LEDGER", "more_horiz", now)
         return CategoryRepository(db)
     }
 

@@ -15,7 +15,7 @@ class PaymentRepositoryTest {
         SnowballDb.Schema.create(driver)
         val db = SnowballDb(driver)
         val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
-        db.categoryQueries.insertOrIgnore("Credit Card", 1, "SCHEDULED", now)
+        db.categoryQueries.insertOrIgnore("Credit Card", 1, "SCHEDULED", "credit_card", now)
         val catId = db.categoryQueries.selectAll().executeAsList().first().id
         val debtRepo = DebtRepository(db)
         val debtId = debtRepo.add("d1", catId, 1000.0, 12, 15, false, LocalDate(2026, 1, 15), null)

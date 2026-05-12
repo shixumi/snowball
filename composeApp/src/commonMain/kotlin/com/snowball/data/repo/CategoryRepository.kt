@@ -14,21 +14,27 @@ class CategoryRepository(private val db: SnowballDb) {
                 name = row.name,
                 isSystem = row.isSystem == 1L,
                 behavior = CategoryBehavior.valueOf(row.behavior),
+                iconKey = row.iconKey,
             )
         }
 
     fun byId(id: Long): Category? =
         db.categoryQueries.selectById(id).executeAsOneOrNull()?.let { row ->
-            Category(row.id, row.name, row.isSystem == 1L, CategoryBehavior.valueOf(row.behavior))
+            Category(row.id, row.name, row.isSystem == 1L, CategoryBehavior.valueOf(row.behavior), row.iconKey)
         }
 
-    fun add(name: String, behavior: CategoryBehavior) {
+    fun add(name: String, behavior: CategoryBehavior, iconKey: String = "") {
         db.categoryQueries.insert(
             name = name,
             isSystem = 0,
             behavior = behavior.name,
+            iconKey = iconKey,
             createdAt = Clock.System.now().toEpochMilliseconds(),
         )
+    }
+
+    fun setIcon(id: Long, iconKey: String) {
+        db.categoryQueries.setIconById(iconKey = iconKey, id = id)
     }
 
     fun rename(id: Long, newName: String) {

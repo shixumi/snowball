@@ -1,0 +1,3 @@
+ALTER TABLE Category ADD COLUMN iconKey TEXT NOT NULL DEFAULT '';
+UPDATE Category SET iconKey = 'credit_card' WHERE name = 'Credit Card';
+UPDATE Category SET iconKey = 'more_horiz' WHERE name = 'MISC';

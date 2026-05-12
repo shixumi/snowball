@@ -21,12 +21,14 @@ private fun seedSystemCategories(db: SnowballDb) {
         name = "Credit Card",
         isSystem = 1,
         behavior = "SCHEDULED",
-        createdAt = now
+        iconKey = "credit_card",
+        createdAt = now,
     )
     db.categoryQueries.insertOrIgnore(
         name = "MISC",
         isSystem = 1,
         behavior = "LEDGER",
-        createdAt = now
+        iconKey = "more_horiz",
+        createdAt = now,
     )
 }
