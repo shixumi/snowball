@@ -35,6 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -142,6 +147,11 @@ private fun PaymentRowContent(row: DueRow, onClick: () -> Unit) {
             .fillMaxWidth()
             .background(SnowColors.Night)
             .clickable(onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                role = Role.Checkbox
+                stateDescription = if (row.isPaidThisCycle) "Paid" else "Not paid"
+                contentDescription = "${row.debt.name}, ₱${row.amount.toLong()}, due ${row.effectiveDueDate}"
+            }
             .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

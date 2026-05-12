@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.snowball.ui.theme.SnowColors
 
@@ -31,7 +33,12 @@ fun PesoText(
         fontSize = style.fontSize * 0.55f,
     )
     val numStyle = style.copy(color = numberColor)
-    Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = "₱$formatted"
+        },
+        verticalAlignment = Alignment.Bottom,
+    ) {
         Text("₱", style = pesoStyle)
         Spacer(Modifier.width(2.dp))
         Text(formatted, style = numStyle)
