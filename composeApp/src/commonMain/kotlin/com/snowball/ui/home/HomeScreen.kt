@@ -62,6 +62,7 @@ import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.UpNextCard
+import com.snowball.ui.components.celebratePaid
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.formatLongDate
@@ -258,6 +259,7 @@ private fun PaymentRowContent(row: DueRow, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .celebratePaid(paid = row.isPaidThisCycle)
             .background(SnowColors.Night)
             .clickable(onClick = onClick)
             .semantics(mergeDescendants = true) {
