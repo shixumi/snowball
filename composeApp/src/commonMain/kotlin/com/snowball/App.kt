@@ -1,5 +1,12 @@
 package com.snowball
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,60 +79,75 @@ fun App(repos: Repos) {
                     .weight(1f)
                     .then(if (isTabs) Modifier else Modifier.navigationBarsPadding())
             ) {
-                when (val r = route) {
-                    is Route.Tabs -> {
-                        when (tab) {
-                            Tab.Home -> HomeScreen(homeVm)
-                            Tab.Debts -> DebtsScreen(
-                                vm = debtsVm,
-                                onAddDebt = { route = Route.Form(null) },
-                                onAddMisc = { route = Route.MiscForm },
-                                onOpenDebt = { id -> route = Route.DebtDetail(id) },
-                            )
-                            Tab.Insights -> {
-                                val insightsVm = remember(refreshKey) { InsightsViewModel(repos) }
-                                InsightsScreen(insightsVm)
-                            }
-                            Tab.Settings -> {
-                                val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
-                                SettingsScreen(
-                                    vm = settingsVm,
-                                    onManageCategories = { route = Route.CategoryManagement },
+                AnimatedContent(
+                    targetState = route,
+                    transitionSpec = {
+                        val forward = initialState is Route.Tabs
+                        if (forward) {
+                            (slideInHorizontally(tween(250)) { it } + fadeIn(tween(250))) togetherWith
+                                (slideOutHorizontally(tween(250)) { -it } + fadeOut(tween(250)))
+                        } else {
+                            (slideInHorizontally(tween(250)) { -it } + fadeIn(tween(250))) togetherWith
+                                (slideOutHorizontally(tween(250)) { it } + fadeOut(tween(250)))
+                        }
+                    },
+                    label = "route",
+                ) { r ->
+                    when (r) {
+                        is Route.Tabs -> {
+                            when (tab) {
+                                Tab.Home -> HomeScreen(homeVm)
+                                Tab.Debts -> DebtsScreen(
+                                    vm = debtsVm,
+                                    onAddDebt = { route = Route.Form(null) },
+                                    onAddMisc = { route = Route.MiscForm },
+                                    onOpenDebt = { id -> route = Route.DebtDetail(id) },
                                 )
+                                Tab.Insights -> {
+                                    val insightsVm = remember(refreshKey) { InsightsViewModel(repos) }
+                                    InsightsScreen(insightsVm)
+                                }
+                                Tab.Settings -> {
+                                    val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
+                                    SettingsScreen(
+                                        vm = settingsVm,
+                                        onManageCategories = { route = Route.CategoryManagement },
+                                    )
+                                }
                             }
                         }
-                    }
-                    is Route.Form -> {
-                        val existing = r.existingDebtId?.let { repos.debts.byId(it) }
-                        val formVm = remember(r.existingDebtId) { DebtFormViewModel(repos, existing) }
-                        DebtFormScreen(
-                            vm = formVm,
-                            onCancel = { route = Route.Tabs },
-                            onSaved = { route = Route.Tabs; refreshKey++ },
-                        )
-                    }
-                    is Route.DebtDetail -> {
-                        val detailVm = remember(r.debtId, refreshKey) { DebtDetailViewModel(repos, r.debtId) }
-                        DebtDetailScreen(
-                            vm = detailVm,
-                            onBack = { route = Route.Tabs; refreshKey++ },
-                            onEdit = { id -> route = Route.Form(id) },
-                        )
-                    }
-                    is Route.MiscForm -> {
-                        val miscVm = remember { MiscFormViewModel(repos) }
-                        MiscFormScreen(
-                            vm = miscVm,
-                            onCancel = { route = Route.Tabs },
-                            onSaved = { route = Route.Tabs; refreshKey++ },
-                        )
-                    }
-                    is Route.CategoryManagement -> {
-                        val catVm = remember(refreshKey) { CategoryManagementViewModel(repos) }
-                        CategoryManagementScreen(
-                            vm = catVm,
-                            onBack = { route = Route.Tabs; refreshKey++ },
-                        )
+                        is Route.Form -> {
+                            val existing = r.existingDebtId?.let { repos.debts.byId(it) }
+                            val formVm = remember(r.existingDebtId) { DebtFormViewModel(repos, existing) }
+                            DebtFormScreen(
+                                vm = formVm,
+                                onCancel = { route = Route.Tabs },
+                                onSaved = { route = Route.Tabs; refreshKey++ },
+                            )
+                        }
+                        is Route.DebtDetail -> {
+                            val detailVm = remember(r.debtId, refreshKey) { DebtDetailViewModel(repos, r.debtId) }
+                            DebtDetailScreen(
+                                vm = detailVm,
+                                onBack = { route = Route.Tabs; refreshKey++ },
+                                onEdit = { id -> route = Route.Form(id) },
+                            )
+                        }
+                        is Route.MiscForm -> {
+                            val miscVm = remember { MiscFormViewModel(repos) }
+                            MiscFormScreen(
+                                vm = miscVm,
+                                onCancel = { route = Route.Tabs },
+                                onSaved = { route = Route.Tabs; refreshKey++ },
+                            )
+                        }
+                        is Route.CategoryManagement -> {
+                            val catVm = remember(refreshKey) { CategoryManagementViewModel(repos) }
+                            CategoryManagementScreen(
+                                vm = catVm,
+                                onBack = { route = Route.Tabs; refreshKey++ },
+                            )
+                        }
                     }
                 }
             }
