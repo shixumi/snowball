@@ -1,0 +1,50 @@
+CREATE TABLE Debt (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    categoryId INTEGER NOT NULL REFERENCES Category(id),
+    monthlyAmount REAL NOT NULL,
+    totalPayments INTEGER NOT NULL,
+    dueDay INTEGER NOT NULL,                   -- 1..30
+    useLastDayOfMonth INTEGER NOT NULL DEFAULT 0,  -- 0|1
+    startDate TEXT NOT NULL,                   -- ISO yyyy-MM-dd
+    isArchived INTEGER NOT NULL DEFAULT 0,
+    notes TEXT,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE INDEX idx_debt_archived ON Debt(isArchived);
+CREATE INDEX idx_debt_category ON Debt(categoryId);
+
+selectAll:
+SELECT * FROM Debt ORDER BY createdAt DESC;
+
+selectActive:
+SELECT * FROM Debt WHERE isArchived = 0 ORDER BY dueDay ASC;
+
+selectById:
+SELECT * FROM Debt WHERE id = ?;
+
+selectByCategory:
+SELECT * FROM Debt WHERE categoryId = ? AND isArchived = 0;
+
+insert:
+INSERT INTO Debt(name, categoryId, monthlyAmount, totalPayments, dueDay, useLastDayOfMonth, startDate, isArchived, notes, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?);
+
+update:
+UPDATE Debt SET
+    name = :name,
+    categoryId = :categoryId,
+    monthlyAmount = :monthlyAmount,
+    totalPayments = :totalPayments,
+    dueDay = :dueDay,
+    useLastDayOfMonth = :useLastDayOfMonth,
+    startDate = :startDate,
+    notes = :notes
+WHERE id = :id;
+
+setArchived:
+UPDATE Debt SET isArchived = :isArchived WHERE id = :id;
+
+deleteById:
+DELETE FROM Debt WHERE id = ?;
