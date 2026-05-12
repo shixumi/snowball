@@ -120,10 +120,10 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
 
         Field("Start date (YYYY-MM-DD)") {
             OutlinedTextField(
-                value = state.startDate.toString(),
+                value = state.startDateText,
                 onValueChange = { v ->
-                    runCatching { kotlinx.datetime.LocalDate.parse(v) }
-                        .onSuccess { d -> vm.update { it.copy(startDate = d) } }
+                    val parsed = runCatching { kotlinx.datetime.LocalDate.parse(v) }.getOrNull()
+                    vm.update { it.copy(startDateText = v, startDate = parsed ?: it.startDate) }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors(),

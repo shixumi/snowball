@@ -18,6 +18,7 @@ data class DebtFormState(
     val dueDay: String = "",
     val useLastDayOfMonth: Boolean = false,
     val startDate: LocalDate = today(),
+    val startDateText: String = startDate.toString(),
     val notes: String = "",
 )
 
@@ -34,6 +35,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 dueDay = existing.dueDay.toString(),
                 useLastDayOfMonth = existing.useLastDayOfMonth,
                 startDate = existing.startDate,
+                startDateText = existing.startDate.toString(),
                 notes = existing.notes.orEmpty(),
             )
         }
@@ -53,6 +55,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         val monthly = state.monthlyAmount.toDoubleOrNull() ?: return false
         val total = state.totalPayments.toIntOrNull() ?: return false
         val due = state.dueDay.toIntOrNull() ?: return false
+        val startDate = runCatching { LocalDate.parse(state.startDateText) }.getOrNull() ?: return false
         if (name.isBlank() || monthly <= 0.0 || total <= 0 || due !in 1..31) return false
 
         if (existingId == null) {
@@ -63,7 +66,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 totalPayments = total,
                 dueDay = due,
                 useLastDayOfMonth = state.useLastDayOfMonth,
-                startDate = state.startDate,
+                startDate = startDate,
                 notes = state.notes.ifBlank { null },
             )
         } else {
@@ -75,7 +78,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 totalPayments = total,
                 dueDay = due,
                 useLastDayOfMonth = state.useLastDayOfMonth,
-                startDate = state.startDate,
+                startDate = startDate,
                 notes = state.notes.ifBlank { null },
             )
         }
