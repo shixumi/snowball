@@ -28,15 +28,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.toFormFieldString
 import kotlinx.coroutines.delay
 
 private fun Double.toFormattedPeso(): String {
     if (this == 0.0) return ""
-    val whole = this.toLong()
-    val grouped = whole.toString().reversed().chunked(3).joinToString(",").reversed()
-    val frac = ((this - whole) * 100 + 0.5).toInt()
-    return if (frac == 0) "₱$grouped" else "₱$grouped.${frac.toString().padStart(2, '0')}"
+    return "₱${formatAmountWithSeparators(this)}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.formatAmountWithSeparators
 
 @Composable
 fun PesoText(
@@ -26,7 +27,7 @@ fun PesoText(
     numberColor: Color = MaterialTheme.colorScheme.onBackground,
     align: TextAlign = TextAlign.Start,
 ) {
-    val formatted = formatAmount(amount)
+    val formatted = formatAmountWithSeparators(amount)
     val pesoStyle = style.copy(
         color = pesoColor,
         fontStyle = FontStyle.Italic,
@@ -43,15 +44,4 @@ fun PesoText(
         Spacer(Modifier.width(2.dp))
         Text(formatted, style = numStyle)
     }
-}
-
-private fun formatAmount(amount: Double): String {
-    val whole = amount.toLong()
-    val fraction = ((kotlin.math.abs(amount) - kotlin.math.abs(whole)) * 100 + 0.5).toInt()
-    val wholeStr = whole.toString()
-        .reversed()
-        .chunked(3)
-        .joinToString(",")
-        .reversed()
-    return if (fraction == 0) wholeStr else "$wholeStr.${fraction.toString().padStart(2, '0')}"
 }
