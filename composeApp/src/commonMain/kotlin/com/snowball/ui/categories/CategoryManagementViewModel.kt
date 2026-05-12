@@ -44,6 +44,7 @@ class CategoryManagementViewModel(private val repos: Repos) {
                 dueDay = d.dueDay,
                 useLastDayOfMonth = d.useLastDayOfMonth,
                 startDate = d.startDate,
+                firstPaymentDate = d.firstPaymentDate,
                 notes = d.notes,
             )
         }

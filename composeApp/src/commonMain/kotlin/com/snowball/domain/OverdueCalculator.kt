@@ -35,23 +35,24 @@ object OverdueCalculator {
         )
     }
 
+    /**
+     * Number of cycles whose effective due date is on or before `asOf`.
+     * Strict semantic: a cycle is "expected to be paid" once its due date passes.
+     * Cycle dates are anchored at firstPaymentDate (NOT startDate — startDate is
+     * loan origination, not the first payment).
+     */
     private fun expectedPaymentsByDate(debt: Debt, asOf: LocalDate): Int {
-        // A cycle is "expected by now" only after its due date PLUS one full month of grace
-        // has passed. This matches user mental model: a payment 26 days past due is not yet
-        // "overdue" — it gets caught up in the next payday cutoff. Only when a full cycle
-        // has elapsed without payment do we flag the debt.
         var count = 0
         for (n in 1..debt.totalPayments) {
             val due = nthDueDate(debt, n) ?: continue
-            val overdueAt = due.plus(1, DateTimeUnit.MONTH)
-            if (overdueAt <= asOf) count++ else break
+            if (due <= asOf) count++ else break
         }
         return count
     }
 
     private fun nthDueDate(debt: Debt, n: Int): LocalDate? {
         if (n < 1 || n > debt.totalPayments) return null
-        val month = debt.startDate.plus(n - 1, DateTimeUnit.MONTH)
+        val month = debt.firstPaymentDate.plus(n - 1, DateTimeUnit.MONTH)
         return effectiveDueDate(
             year = month.year,
             month = month.monthNumber,

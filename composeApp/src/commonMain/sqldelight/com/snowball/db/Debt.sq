@@ -6,7 +6,8 @@ CREATE TABLE Debt (
     totalPayments INTEGER NOT NULL,
     dueDay INTEGER NOT NULL,                   -- 1..30
     useLastDayOfMonth INTEGER NOT NULL DEFAULT 0,  -- 0|1
-    startDate TEXT NOT NULL,                   -- ISO yyyy-MM-dd
+    startDate TEXT NOT NULL,                   -- ISO yyyy-MM-dd: loan origination
+    firstPaymentDate TEXT NOT NULL DEFAULT '', -- ISO yyyy-MM-dd: when cycle 1 is due
     isArchived INTEGER NOT NULL DEFAULT 0,
     notes TEXT,
     createdAt INTEGER NOT NULL
@@ -28,8 +29,8 @@ selectByCategory:
 SELECT * FROM Debt WHERE categoryId = ? AND isArchived = 0;
 
 insert:
-INSERT INTO Debt(name, categoryId, monthlyAmount, totalPayments, dueDay, useLastDayOfMonth, startDate, isArchived, notes, createdAt)
-VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?);
+INSERT INTO Debt(name, categoryId, monthlyAmount, totalPayments, dueDay, useLastDayOfMonth, startDate, firstPaymentDate, isArchived, notes, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?);
 
 update:
 UPDATE Debt SET
@@ -40,6 +41,7 @@ UPDATE Debt SET
     dueDay = :dueDay,
     useLastDayOfMonth = :useLastDayOfMonth,
     startDate = :startDate,
+    firstPaymentDate = :firstPaymentDate,
     notes = :notes
 WHERE id = :id;
 

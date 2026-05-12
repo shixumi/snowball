@@ -27,7 +27,7 @@ object CutoffCalculator {
             ) ?: continue
 
             if (effective < cutoff.windowStart || effective > cutoff.windowEnd) continue
-            if (debt.startDate > cutoff.payDate) continue
+            if (debt.firstPaymentDate > cutoff.payDate) continue
 
             val priorEffective = priorCycleDueDate(debt, effective)
             val payments = paymentsByDebt[debt.id].orEmpty()
@@ -68,8 +68,8 @@ object CutoffCalculator {
             dueDay = debt.dueDay, useLastDay = debt.useLastDayOfMonth,
         )
         return when {
-            prior == null -> debt.startDate
-            prior < debt.startDate -> debt.startDate
+            prior == null -> debt.firstPaymentDate
+            prior < debt.firstPaymentDate -> debt.firstPaymentDate
             else -> prior
         }
     }

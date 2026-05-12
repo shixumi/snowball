@@ -15,11 +15,13 @@ class CutoffCalculatorTest {
         monthly: Double = 1000.0,
         total: Int = 12,
         start: LocalDate = LocalDate(2026, 1, 1),
+        firstPayment: LocalDate = start,
         archived: Boolean = false,
     ) = Debt(
         id = id, name = "d$id", categoryId = 1, monthlyAmount = monthly,
         totalPayments = total, dueDay = dueDay, useLastDayOfMonth = useLastDay,
-        startDate = start, isArchived = archived, notes = null,
+        startDate = start, firstPaymentDate = firstPayment,
+        isArchived = archived, notes = null,
     )
 
     @Test

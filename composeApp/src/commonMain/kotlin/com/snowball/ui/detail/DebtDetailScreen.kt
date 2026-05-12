@@ -234,6 +234,8 @@ fun DebtDetailScreen(
                 Spacer(Modifier.height(12.dp))
                 StatRow(label = "STARTED", value = formatLongDate(state.debt.startDate))
                 Spacer(Modifier.height(12.dp))
+                StatRow(label = "FIRST PAYMENT", value = formatLongDate(state.debt.firstPaymentDate))
+                Spacer(Modifier.height(12.dp))
                 StatRow(
                     label = "PROJECTED END",
                     value = state.projectedEndDate?.let { formatLongDate(it) } ?: "—",

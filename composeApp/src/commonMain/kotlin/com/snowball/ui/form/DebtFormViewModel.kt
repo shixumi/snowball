@@ -9,7 +9,9 @@ import com.snowball.data.model.CategoryBehavior
 import com.snowball.data.model.Debt
 import com.snowball.domain.today
 import com.snowball.ui.util.toFormFieldString
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 
 data class DebtFormState(
     val name: String = "",
@@ -21,6 +23,8 @@ data class DebtFormState(
     val useLastDayOfMonth: Boolean = false,
     val startDate: LocalDate = today(),
     val startDateText: String = startDate.toString(),
+    val firstPaymentDate: LocalDate = today().plus(1, DateTimeUnit.MONTH),
+    val firstPaymentDateText: String = firstPaymentDate.toString(),
     val notes: String = "",
 )
 
@@ -39,7 +43,10 @@ fun DebtFormState.isPaymentsAlreadyMadeValid(): Boolean {
 }
 
 fun DebtFormState.isStartDateValid(): Boolean =
-    runCatching { kotlinx.datetime.LocalDate.parse(startDateText) }.isSuccess
+    runCatching { LocalDate.parse(startDateText) }.isSuccess
+
+fun DebtFormState.isFirstPaymentDateValid(): Boolean =
+    runCatching { LocalDate.parse(firstPaymentDateText) }.isSuccess
 
 fun DebtFormState.isValid(): Boolean =
     isNameValid() &&
@@ -48,7 +55,8 @@ fun DebtFormState.isValid(): Boolean =
         isTotalPaymentsValid() &&
         isDueDayValid() &&
         isPaymentsAlreadyMadeValid() &&
-        isStartDateValid()
+        isStartDateValid() &&
+        isFirstPaymentDateValid()
 
 class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
     var state: DebtFormState by mutableStateOf(
@@ -65,6 +73,8 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 useLastDayOfMonth = existing.useLastDayOfMonth,
                 startDate = existing.startDate,
                 startDateText = existing.startDate.toString(),
+                firstPaymentDate = existing.firstPaymentDate,
+                firstPaymentDateText = existing.firstPaymentDate.toString(),
                 notes = existing.notes.orEmpty(),
             )
         }
@@ -90,6 +100,7 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         val due = state.dueDay.toIntOrNull() ?: return false
         val alreadyPaid = state.paymentsAlreadyMade.toIntOrNull() ?: 0
         val startDate = runCatching { LocalDate.parse(state.startDateText) }.getOrNull() ?: return false
+        val firstPaymentDate = runCatching { LocalDate.parse(state.firstPaymentDateText) }.getOrNull() ?: return false
         if (name.isBlank() || monthly <= 0.0 || total <= 0 || due !in 1..31) return false
         if (alreadyPaid < 0 || alreadyPaid > total) return false
 
@@ -102,10 +113,11 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 dueDay = due,
                 useLastDayOfMonth = state.useLastDayOfMonth,
                 startDate = startDate,
+                firstPaymentDate = firstPaymentDate,
                 notes = state.notes.ifBlank { null },
             )
             val newId = repos.debts.all().first().id
-            backfillPayments(newId, monthly, startDate, alreadyPaid)
+            backfillPayments(newId, monthly, firstPaymentDate, alreadyPaid)
             if (alreadyPaid >= total) repos.debts.setArchived(newId, true)
         } else {
             repos.debts.update(
@@ -117,9 +129,10 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
                 dueDay = due,
                 useLastDayOfMonth = state.useLastDayOfMonth,
                 startDate = startDate,
+                firstPaymentDate = firstPaymentDate,
                 notes = state.notes.ifBlank { null },
             )
-            reconcilePayments(existingId, monthly, startDate, alreadyPaid)
+            reconcilePayments(existingId, monthly, firstPaymentDate, alreadyPaid)
             if (alreadyPaid >= total) repos.debts.setArchived(existingId, true)
             else if (repos.debts.byId(existingId)?.isArchived == true) repos.debts.setArchived(existingId, false)
         }
@@ -132,19 +145,19 @@ class DebtFormViewModel(private val repos: Repos, existing: Debt? = null) {
         return true
     }
 
-    /** Insert N synthetic payments dated at the start so they count toward paymentsMade. */
-    private fun backfillPayments(debtId: Long, monthly: Double, startDate: LocalDate, count: Int) {
+    /** Insert N synthetic payments dated at the first-payment date so they count toward paymentsMade. */
+    private fun backfillPayments(debtId: Long, monthly: Double, anchorDate: LocalDate, count: Int) {
         repeat(count) {
-            repos.payments.markPaid(debtId, startDate, monthly)
+            repos.payments.markPaid(debtId, anchorDate, monthly)
         }
     }
 
     /** Adjust the recorded payment count to match `alreadyPaid` by adding or removing rows. */
-    private fun reconcilePayments(debtId: Long, monthly: Double, startDate: LocalDate, alreadyPaid: Int) {
+    private fun reconcilePayments(debtId: Long, monthly: Double, anchorDate: LocalDate, alreadyPaid: Int) {
         val current = repos.payments.countForDebt(debtId)
         when {
             current < alreadyPaid -> repeat(alreadyPaid - current) {
-                repos.payments.markPaid(debtId, startDate, monthly)
+                repos.payments.markPaid(debtId, anchorDate, monthly)
             }
             current > alreadyPaid -> {
                 val history = repos.payments.historyForDebt(debtId)

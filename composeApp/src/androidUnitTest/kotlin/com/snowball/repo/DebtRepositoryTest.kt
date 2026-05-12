@@ -32,19 +32,21 @@ class DebtRepositoryTest {
             dueDay = 17,
             useLastDayOfMonth = false,
             startDate = LocalDate(2026, 1, 17),
+            firstPaymentDate = LocalDate(2026, 2, 17),
             notes = null,
         )
         val read = repo.byId(id)
         assertNotNull(read)
         assertEquals("Sloan 16,500", read.name)
         assertEquals(17, read.dueDay)
+        assertEquals(LocalDate(2026, 2, 17), read.firstPaymentDate)
     }
 
     @Test
     fun selectActive_excludes_archived() {
         val db = freshDb()
         val repo = DebtRepository(db)
-        val id = repo.add("a", catId(db), 100.0, 1, 1, false, LocalDate(2026, 1, 1), null)
+        val id = repo.add("a", catId(db), 100.0, 1, 1, false, LocalDate(2026, 1, 1), LocalDate(2026, 2, 1), null)
         repo.setArchived(id, true)
         assertEquals(0, repo.allActive().size)
     }
@@ -53,7 +55,7 @@ class DebtRepositoryTest {
     fun update_persists_fields() {
         val db = freshDb()
         val repo = DebtRepository(db)
-        val id = repo.add("a", catId(db), 100.0, 1, 1, false, LocalDate(2026, 1, 1), null)
+        val id = repo.add("a", catId(db), 100.0, 1, 1, false, LocalDate(2026, 1, 1), LocalDate(2026, 2, 1), null)
         repo.update(
             id = id,
             name = "renamed",
@@ -63,11 +65,13 @@ class DebtRepositoryTest {
             dueDay = 5,
             useLastDayOfMonth = true,
             startDate = LocalDate(2026, 2, 1),
+            firstPaymentDate = LocalDate(2026, 3, 1),
             notes = "note",
         )
         val updated = repo.byId(id)!!
         assertEquals("renamed", updated.name)
         assertEquals(200.0, updated.monthlyAmount)
         assertEquals(true, updated.useLastDayOfMonth)
+        assertEquals(LocalDate(2026, 3, 1), updated.firstPaymentDate)
     }
 }

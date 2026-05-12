@@ -15,6 +15,7 @@ class JourneyCalculatorTest {
         monthlyAmount: Double = 1500.0,
         totalPayments: Int = 12,
         startDate: LocalDate = LocalDate(2026, 1, 1),
+        firstPaymentDate: LocalDate = startDate,
         dueDay: Int = 10,
         useLastDayOfMonth: Boolean = false,
         isArchived: Boolean = false,
@@ -27,6 +28,7 @@ class JourneyCalculatorTest {
         dueDay = dueDay,
         useLastDayOfMonth = useLastDayOfMonth,
         startDate = startDate,
+        firstPaymentDate = firstPaymentDate,
         isArchived = isArchived,
         notes = null,
     )

@@ -1,0 +1,4 @@
+ALTER TABLE Debt ADD COLUMN firstPaymentDate TEXT NOT NULL DEFAULT '';
+-- Backfill: assume convention is "got the loan, started paying one month later".
+-- For each existing debt, set firstPaymentDate to startDate + 1 month.
+UPDATE Debt SET firstPaymentDate = date(startDate, '+1 month');

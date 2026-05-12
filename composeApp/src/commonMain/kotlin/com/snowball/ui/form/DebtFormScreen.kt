@@ -325,6 +325,32 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
                     colors = textFieldColors(),
                     shape = RoundedCornerShape(12.dp),
                 )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "When you got the loan.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SnowColors.FrostMute,
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+
+            Field("First payment date (YYYY-MM-DD)") {
+                OutlinedTextField(
+                    value = state.firstPaymentDateText,
+                    onValueChange = { v ->
+                        val parsed = runCatching { kotlinx.datetime.LocalDate.parse(v) }.getOrNull()
+                        vm.update { it.copy(firstPaymentDateText = v, firstPaymentDate = parsed ?: it.firstPaymentDate) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = textFieldColors(),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "When your first payment is due. Usually one month after start.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SnowColors.FrostMute,
+                )
             }
             Spacer(Modifier.height(16.dp))
 

@@ -19,7 +19,7 @@ data class JourneyStats(
  */
 fun projectedEndDate(debt: Debt): LocalDate? {
     if (debt.totalPayments <= 0) return null
-    val endMonth = debt.startDate.plus(debt.totalPayments - 1, DateTimeUnit.MONTH)
+    val endMonth = debt.firstPaymentDate.plus(debt.totalPayments - 1, DateTimeUnit.MONTH)
 
     // Try with the original settings first
     var result = effectiveDueDate(

@@ -50,6 +50,7 @@ class MiscFormViewModel(private val repos: Repos) {
             dueDay = 1,
             useLastDayOfMonth = false,
             startDate = date,
+            firstPaymentDate = date,
             notes = state.notes.ifBlank { null },
         )
         val newId = repos.debts.all().first().id

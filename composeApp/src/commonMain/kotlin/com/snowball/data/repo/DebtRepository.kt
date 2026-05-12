@@ -15,6 +15,7 @@ class DebtRepository(private val db: SnowballDb) {
         dueDay: Int,
         useLastDayOfMonth: Boolean,
         startDate: LocalDate,
+        firstPaymentDate: LocalDate,
         notes: String?,
     ): Long {
         db.debtQueries.insert(
@@ -25,6 +26,7 @@ class DebtRepository(private val db: SnowballDb) {
             dueDay = dueDay.toLong(),
             useLastDayOfMonth = if (useLastDayOfMonth) 1L else 0L,
             startDate = startDate.toString(),
+            firstPaymentDate = firstPaymentDate.toString(),
             notes = notes,
             createdAt = Clock.System.now().toEpochMilliseconds(),
         )
@@ -40,6 +42,7 @@ class DebtRepository(private val db: SnowballDb) {
         dueDay: Int,
         useLastDayOfMonth: Boolean,
         startDate: LocalDate,
+        firstPaymentDate: LocalDate,
         notes: String?,
     ) {
         db.debtQueries.update(
@@ -50,6 +53,7 @@ class DebtRepository(private val db: SnowballDb) {
             dueDay = dueDay.toLong(),
             useLastDayOfMonth = if (useLastDayOfMonth) 1L else 0L,
             startDate = startDate.toString(),
+            firstPaymentDate = firstPaymentDate.toString(),
             notes = notes,
             id = id,
         )
@@ -81,6 +85,7 @@ class DebtRepository(private val db: SnowballDb) {
         dueDay = dueDay.toInt(),
         useLastDayOfMonth = useLastDayOfMonth == 1L,
         startDate = LocalDate.parse(startDate),
+        firstPaymentDate = if (firstPaymentDate.isBlank()) LocalDate.parse(startDate) else LocalDate.parse(firstPaymentDate),
         isArchived = isArchived == 1L,
         notes = notes,
     )

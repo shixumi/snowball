@@ -18,7 +18,7 @@ class PaymentRepositoryTest {
         db.categoryQueries.insertOrIgnore("Credit Card", 1, "SCHEDULED", "credit_card", now)
         val catId = db.categoryQueries.selectAll().executeAsList().first().id
         val debtRepo = DebtRepository(db)
-        val debtId = debtRepo.add("d1", catId, 1000.0, 12, 15, false, LocalDate(2026, 1, 15), null)
+        val debtId = debtRepo.add("d1", catId, 1000.0, 12, 15, false, LocalDate(2026, 1, 15), LocalDate(2026, 2, 15), null)
         return Triple(PaymentRepository(db), debtRepo, debtId)
     }
 

@@ -10,7 +10,8 @@ data class Debt(
     val totalPayments: Int,
     val dueDay: Int,
     val useLastDayOfMonth: Boolean,
-    val startDate: LocalDate,
+    val startDate: LocalDate,         // loan origination — informational
+    val firstPaymentDate: LocalDate,  // when cycle 1 falls due (drives all schedule math)
     val isArchived: Boolean,
     val notes: String?,
 )
