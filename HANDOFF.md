@@ -9,7 +9,7 @@ Resume notes for picking up the project in a new session.
 - **Repo:** `https://github.com/shixumi/snowball` (private; user `shixumi`)
 - **Working tree:** keep clean unless mid-task
 - **Branch:** `main`
-- **Current tag:** `v0.2.10`
+- **Current tag:** `v0.3.0`
 
 ## Where things are
 
@@ -26,7 +26,10 @@ docs/
 │   │   ├── 2026-05-13-snowball-v02c-categories-design.md
 │   │   ├── 2026-05-13-snowball-v02d-rollover-design.md
 │   │   ├── 2026-05-13-snowball-insights-design.md
-│   │   └── 2026-05-13-snowball-animations-design.md
+│   │   ├── 2026-05-13-snowball-animations-design.md
+│   │   ├── 2026-05-13-ui-polish-pass-design.md           (v0.2.11)
+│   │   ├── 2026-05-13-v0212-polish-pass2-design.md        (v0.2.12)
+│   │   └── 2026-05-13-v030-design.md                      (v0.3.0)
 │   └── plans/                              ← writing-plans output, one per spec
 │       └── (same dates, "-design" → -<feature>")
 └── setup/
@@ -36,24 +39,31 @@ docs/
 Source: `composeApp/src/commonMain/kotlin/com/snowball/`
 - `data/` — model + repos + db factory
 - `domain/` — pure calculators (Cutoff, Journey, Overdue, Insights)
-- `ui/components/` — shared composables (CutoffCard, PesoText, ProgressArc, UpNextCard, JourneyCard, IconCatalog, StaggeredItem)
+- `platform/` — `expect` classes (Haptics, NotificationScheduler, Permissions) — actuals in `androidMain/`
+- `ui/components/` — shared composables (CutoffCard, PesoText, ProgressArc, UpNextCard, JourneyCard, IconCatalog, StaggeredItem, PressScale, CelebratePaid, SwipeCoachmark)
 - `ui/home/` — HomeScreen + VM
-- `ui/debts/` — list + VM (now shows scheduled + MISC sections)
+- `ui/debts/` — list + detail + VM (now shows scheduled + MISC sections)
 - `ui/form/` — DebtFormScreen + VM (with validation, TopAppBar, dropdown)
-- `ui/detail/` — DebtDetailScreen + VM (Detail screen with progress arc + payment history)
 - `ui/misc/` — MISC item slim form
 - `ui/categories/` — Category Management (rename/icon/delete/reassign)
-- `ui/insights/` — Insights tab (snapshot + 12-cutoff forecast)
-- `ui/settings/` — SettingsScreen + VM
+- `ui/insights/` — Insights tab (snapshot + payoff timeline + 12-cutoff forecast)
+- `ui/onboarding/` — 4-slide welcome flow shown on first launch only
+- `ui/settings/` — SettingsScreen + VM (income + notifications)
 - `ui/nav/` — BottomNav + SystemBackHandler expect/actual
 - `ui/util/` — AmountFormat, DateFormat
 - `ui/theme/` — Color, Type, Theme
-- `App.kt` — sealed `Route` + AnimatedContent route transitions
+- `App.kt` — sealed `Route` (Tabs, DebtForm, DebtDetail, Onboarding) + AnimatedContent route transitions
+
+Android-only sources: `composeApp/src/androidMain/kotlin/com/snowball/`
+- `MainActivity.kt` — splash + channel init + scheduler bootstrap
+- `notifications/` — `PaydayWorker`, `NotificationChannelInit`
+- `platform/` — `actual` Haptics, NotificationScheduler, Permissions (via WorkManager + Compose APIs)
+- `ui/nav/SystemBackHandler.android.kt`
 
 SQLDelight schema: `composeApp/src/commonMain/sqldelight/com/snowball/db/`
 - `Category.sq`, `Debt.sq`, `Payment.sq`, `Settings.sq`, `_Init.sq`
-- Migrations: `1.sqm` (adds iconKey to Category), `2.sqm` (adds firstPaymentDate to Debt)
-- Current schema version: 3 (auto-detected from highest .sqm)
+- Migrations: `1.sqm` (Category.iconKey), `2.sqm` (Debt.firstPaymentDate), `3.sqm` (Settings.firstLaunchSeen + swipeCoachmarkSeen)
+- Current schema version: **4** (auto-detected from highest .sqm)
 
 ## Tag history
 
@@ -72,18 +82,27 @@ SQLDelight schema: `composeApp/src/commonMain/sqldelight/com/snowball/db/`
 | v0.2.8 | Distribute backfilled payment dates across cycle months |
 | v0.2.9 | Insights page (snapshot + 12-cutoff forecast) |
 | v0.2.10 | Animation polish (counters, progress arc, chevron, list stagger, route transitions) |
+| v0.2.11 | UI polish pass 1: animated navbar, form cascade, press feedback, empty-state motion |
+| v0.2.12 | Identity (splash + snowflake glyph), mark-paid celebration, motion gaps, copy unification |
+| v0.3.0 | Notifications, haptics, onboarding flow, swipe coachmark, payoff timeline, db v4 |
 
 ## Architecture decisions / nuances
 
 - **Cutoff windows:** 15th payday covers days 15–30 of same month; 30th payday covers days 1–14 of NEXT month. Day 15 belongs to 15th cutoff.
 - **`startDate` vs `firstPaymentDate`:** `startDate` = loan origination (informational). `firstPaymentDate` = when cycle 1 falls due (drives all schedule math). User's default convention: `firstPaymentDate = startDate + 1 month`.
-- **Backfill distribution:** When user enters `paymentsAlreadyMade = N`, the form creates N synthetic payments at `firstPaymentDate + i months` (i = 0..N-1). This ensures each fall in a distinct cutoff window. `reconcilePayments` also detects uniform-date legacy backfills (multiple rows same paidDate) and redistributes on save.
+- **Backfill distribution:** When user enters `paymentsAlreadyMade = N`, the form creates N synthetic payments at `firstPaymentDate + i months` (i = 0..N-1). `reconcilePayments` also detects legacy uniform-date backfills and redistributes on save.
 - **MISC items:** `Debt` rows with `categoryId` in a LEDGER category, `totalPayments = 1`, auto-archived. Excluded from cutoff totals (filtered via `category.behavior == SCHEDULED` in calculators). Visible in their own section on Debts tab regardless of archive state.
-- **OverdueCalculator:** Strict "past due" semantics — a cycle is expected as soon as its due date passes. No grace period (was tried in v0.2.4, reverted in v0.2.5 once firstPaymentDate provided the right anchor).
+- **OverdueCalculator:** Strict "past due" semantics — a cycle is expected as soon as its due date passes. No grace period.
 - **Insights forecast:** Walks `nextCutoff(today).next()` forward 12 cutoffs, simulating virtual payments per iteration so debts roll off the list as their cycles exhaust.
+- **Insights payoff timeline:** Active SCHEDULED debts sorted by `projectedEndDate(debt)` ascending, rendered between SnapshotCard and forecast list.
 - **PesoText:** Always wraps in `BoxWithConstraints` and auto-shrinks via `TextMeasurer` so long amounts never break layout. Opt-in `animate = true` tweens the value (used on DUE, INCOME, LEFT OVER, Insights remaining).
-- **Route transitions:** `AnimatedContent` with `slideInHorizontally`/`slideOutHorizontally` (NOT `slideIntoContainer` — that's Android-only). Forward navigation slides Start→End; back slides End→Start. Heuristic: `forward = initialState is Route.Tabs`.
-- **System back:** `SystemBackHandler` `expect/actual` in `ui/nav/`. Android impl uses `androidx.activity.compose.BackHandler`. Enabled whenever route is not Tabs.
+- **Route transitions:** `AnimatedContent` with `slideInHorizontally`/`slideOutHorizontally` (NOT `slideIntoContainer` — that's Android-only). Forward navigation slides Start→End; back slides End→Start.
+- **System back:** `SystemBackHandler` `expect/actual` in `ui/nav/`. Android impl uses `androidx.activity.compose.BackHandler`. Enabled whenever route is not Tabs and not Onboarding.
+- **First-launch routing:** On App start, read `repos.settings.get().firstLaunchSeen`. If false → `Route.Onboarding`. Existing users (upgrading from v0.2.x) are backfilled to `firstLaunchSeen = 1` by migration `3.sqm` so they don't see onboarding.
+- **Swipe coachmark:** Shown on Home only when `swipeCoachmarkSeen == 0` AND there's an unpaid row. Auto-dismisses on swipe / tap / 5s. **Note:** swipe-LEFT marks paid (EndToStart); swipe-RIGHT is undo. The coachmark text and arrow direction reflect this.
+- **Haptics:** `Haptics` expect class with `tick()` + `thump()`. Android actual wraps Compose's `HapticFeedback`. Applied on: tab tap, mark-paid (thump), undo (tick), Save button.
+- **Notifications:** WorkManager `PeriodicWorkRequest` (daily) with `PaydayWorker` that fires a `NotificationCompat` post on the 15th and last day of the month. `NotificationScheduler` expect class; Android actual uses `WorkManager.enqueueUniquePeriodicWork`. `POST_NOTIFICATIONS` runtime permission requested via `expect/actual rememberRequestNotificationPermission` (uses `ActivityResultContracts.RequestPermission` on Android). Channel `"payday"` created in `MainActivity.onCreate`.
+- **Splash screen:** AndroidX `core-splashscreen` 1.0.1. Theme `Theme.App.Starting` extends `Theme.SplashScreen`, background `@color/Night` (#0E1620), foreground `@mipmap/ic_launcher_foreground`. `MainActivity` calls `installSplashScreen()` before `super.onCreate`.
 
 ## Build / run
 
@@ -105,40 +124,54 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 - App package: `com.snowball`, launcher: `com.snowball/.MainActivity`
 - JDK 21 from Android Studio's bundled JBR. AGP 8.7. Compose Multiplatform 1.8.0.
 
-## v0.3 backlog (deferred from v0.2)
+## v0.3+ backlog
 
-**E — Notifications**
-- Payday-style notifications on 15th and 30th. Platform-specific via `expect/actual`: Android `AlarmManager` + `NotificationCompat`. Settings already has the toggle + time-of-day picker stub.
-- Needs real device verification (emulator can't fake wall-clock progression cleanly).
+**Sub-project E — Notifications: SHIPPED in v0.3.0.** Verify on a real device (emulator can't fake wall-clock progression cleanly):
+- Toggle the Settings switch (grants `POST_NOTIFICATIONS` on Android 13+)
+- Set time to ~2 minutes from now, leave app, wait for the worker to fire on the next 15th / last day of month
+- On non-payday dates, the worker still runs daily but doesn't post — confirm no spurious notifications
 
-**F — Multiplatform expansion**
+**Sub-project F — Multiplatform expansion** (hardware-gated, deferred):
 - iOS target (needs Mac + Xcode + Apple ID; free signing OK for personal use until $99/yr cert for TestFlight)
 - macOS desktop target (fast iteration during development)
 - Windows desktop target (work machine)
 - Mostly toolchain/build-config work. Existing commonMain code is already mostly platform-agnostic.
 
-**v0.2-style features that didn't make the cut**
-- Per-debt payoff calendar (Insights v2)
-- By-category breakdown chart (Insights v2)
+**Insights v2 (per-debt payoff calendar shipped in v0.3.0). Remaining items:**
+- By-category breakdown chart (monthly burden by category)
 - Snowball ranking (smallest balance first)
-- Tap-to-drill on Insights forecast rows
+- Tap-to-drill on Insights forecast rows (sheet showing which debts hit that cutoff)
 - Time-horizon switcher on Insights (3/6/12/all)
-- Proper coachmark for first-launch swipe instruction
+
+**Polish items not yet shipped:**
+- Loading shimmer / skeleton on app cold start (needs async state separation)
+- Custom branded route transitions (snowflake wipe or particle effect)
+- Long-press on payment row → quick edit
+- Form auto-focus + tab order
+- Settings sliders / textfield focus pop
+
+**Parked further out:**
+- Light mode
+- Localization
 - Cross-device sync / cloud backup
 - Snowball-method recommendations
 - Avalanche method (would need interest rate field)
 - What-if extra-payment simulations
 - Cutoff history view
 - Spreadsheet import
+- Multiple income sources / variable cutoff income
+- Multi-currency
 
 ## Known gotchas
 
 - **`Read` tool on `.png` files crashes the agent.** Confirmed on multiple PNGs from `%TEMP%`. Capture screenshots for the human user, never Read them. uiautomator XML dumps work fine.
 - **Subagents default to bash shell on Windows.** Tell them explicitly to use the Gradle wrapper path or set `$env:JAVA_HOME` before gradle commands.
 - **Git LF→CRLF warnings on every commit are harmless.** Don't try to fix.
-- **`HANDOFF.md` and `build.log` were accidentally committed at v0.2.5.** Not a real problem but worth a future cleanup.
-- **`slideIntoContainer` / `slideOutOfContainer` are Android-only.** Used `slideInHorizontally` / `slideOutHorizontally` for cross-platform compatibility (works once iOS/desktop targets are added).
+- **`slideIntoContainer` / `slideOutOfContainer` are Android-only.** Use `slideInHorizontally` / `slideOutHorizontally` for cross-platform compatibility.
+- **`LocalContext` and `Manifest`/`Build` aren't accessible in commonMain.** Wrap any Android-specific UI hooks in expect/actual (see `Permissions.kt` / `Permissions.android.kt` for the pattern).
+- **WorkManager daily worker drift.** Periodic jobs can drift by several minutes; acceptable for payday notifications.
+- **Subagent self-check may flag Co-Authored-By trailers as "impersonation."** False positive — the project's commit pattern is `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`. Use that trailer.
 
 ## How to resume
 
-> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. Current state is `v0.2.10`. The full feature backlog and architecture decisions are documented above. For next steps, common ones are: (a) sub-project E (notifications), (b) sub-project F (iOS/macOS/Windows targets), (c) iterating on the Insights page (per-debt payoff calendar, by-category chart), (d) any user-facing polish the user requests. Pick up from the user's first message.
+> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. Current state is `v0.3.0`. The full feature backlog and architecture decisions are documented above. For next steps, common ones are: (a) verify notifications on the real S25 device (sideload v0.3.0 APK), (b) sub-project F (iOS/macOS/Windows targets — hardware-gated), (c) Insights v2 remaining items (by-category chart, snowball ranking, tap-to-drill, time-horizon switcher), (d) deferred polish (loading shimmer, custom branded transitions). Pick up from the user's first message.
