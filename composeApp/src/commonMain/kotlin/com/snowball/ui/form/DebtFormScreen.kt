@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.platform.rememberHaptics
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.icon
 import com.snowball.ui.components.pressScale
@@ -64,6 +65,7 @@ import com.snowball.ui.theme.SnowColors
 @Composable
 fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> Unit) {
     val state = vm.state
+    val haptics = rememberHaptics()
 
     var nameTouched by remember { mutableStateOf(false) }
     var nameHadFocus by remember { mutableStateOf(false) }
@@ -133,7 +135,7 @@ fun DebtFormScreen(vm: DebtFormViewModel, onCancel: () -> Unit, onSaved: () -> U
             Surface(color = SnowColors.Night) {
                 val saveInteractionSource = remember { MutableInteractionSource() }
                 Button(
-                    onClick = { if (vm.save()) onSaved() },
+                    onClick = { haptics.tick(); if (vm.save()) onSaved() },
                     enabled = vm.isValid,
                     interactionSource = saveInteractionSource,
                     modifier = Modifier

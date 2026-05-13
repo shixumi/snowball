@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.platform.Haptics
+import com.snowball.platform.rememberHaptics
 import com.snowball.ui.components.pressScale
 import com.snowball.ui.theme.SnowColors
 
@@ -54,6 +56,7 @@ fun BottomNav(
     onSelect: (Tab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptics = rememberHaptics()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -82,6 +85,7 @@ fun BottomNav(
                     modifier = Modifier
                         .weight(1f)
                         .clickable(interactionSource = interactionSource, indication = LocalIndication.current) {
+                            haptics.tick()
                             onSelect(tab)
                         }
                         .pressScale(interactionSource)

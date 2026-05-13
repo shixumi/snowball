@@ -48,9 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import com.snowball.platform.rememberHaptics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -240,7 +239,7 @@ fun HomeScreen(vm: HomeViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeablePaymentRow(row: DueRow, onMarkPaid: () -> Unit, onUndo: () -> Unit) {
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberHaptics()
     val onMarkPaidLatest by rememberUpdatedState(onMarkPaid)
     val onUndoLatest by rememberUpdatedState(onUndo)
     val dismissState = rememberSwipeToDismissBoxState(
@@ -251,12 +250,12 @@ private fun SwipeablePaymentRow(row: DueRow, onMarkPaid: () -> Unit, onUndo: () 
             // so we never call into a stale row's onMarkPaid/onUndo.
             when (value) {
                 SwipeToDismissBoxValue.EndToStart -> {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptics.thump()
                     onMarkPaidLatest()
                     false
                 }
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptics.tick()
                     onUndoLatest()
                     false
                 }
