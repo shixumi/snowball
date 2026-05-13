@@ -1,0 +1,3 @@
+ALTER TABLE Settings ADD COLUMN firstLaunchSeen INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE Settings ADD COLUMN swipeCoachmarkSeen INTEGER NOT NULL DEFAULT 0;
+UPDATE Settings SET firstLaunchSeen = 1, swipeCoachmarkSeen = 1 WHERE id = 1;

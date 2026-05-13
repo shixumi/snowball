@@ -6,4 +6,6 @@ data class Settings(
     val notificationsEnabled: Boolean,
     val notificationHour: Int,
     val notificationMinute: Int,
+    val firstLaunchSeen: Boolean,
+    val swipeCoachmarkSeen: Boolean,
 )

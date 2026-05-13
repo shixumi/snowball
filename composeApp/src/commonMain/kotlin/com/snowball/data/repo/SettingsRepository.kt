@@ -13,6 +13,8 @@ class SettingsRepository(private val db: SnowballDb) {
             notificationsEnabled = row.notificationsEnabled == 1L,
             notificationHour = row.notificationHour.toInt(),
             notificationMinute = row.notificationMinute.toInt(),
+            firstLaunchSeen = row.firstLaunchSeen == 1L,
+            swipeCoachmarkSeen = row.swipeCoachmarkSeen == 1L,
         )
     }
 
@@ -26,5 +28,13 @@ class SettingsRepository(private val db: SnowballDb) {
 
     fun setNotificationTime(hour: Int, minute: Int) {
         db.settingsQueries.setNotificationTime(hour.toLong(), minute.toLong())
+    }
+
+    fun markFirstLaunchSeen() {
+        db.settingsQueries.setFirstLaunchSeen()
+    }
+
+    fun markSwipeCoachmarkSeen() {
+        db.settingsQueries.setSwipeCoachmarkSeen()
     }
 }
