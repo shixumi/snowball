@@ -39,11 +39,13 @@ import com.snowball.ui.misc.MiscFormViewModel
 import com.snowball.ui.nav.BottomNav
 import com.snowball.ui.nav.SystemBackHandler
 import com.snowball.ui.nav.Tab
+import com.snowball.ui.onboarding.OnboardingScreen
 import com.snowball.ui.settings.SettingsScreen
 import com.snowball.ui.settings.SettingsViewModel
 import com.snowball.ui.theme.SnowballTheme
 
 sealed interface Route {
+    data object Onboarding : Route
     data object Tabs : Route
     data class Form(val existingDebtId: Long?) : Route
     data class DebtDetail(val debtId: Long) : Route
@@ -54,7 +56,10 @@ sealed interface Route {
 @Composable
 fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
     SnowballTheme {
-        var route by remember { mutableStateOf<Route>(Route.Tabs) }
+        val initialRoute = remember {
+            if (!repos.settings.get().firstLaunchSeen) Route.Onboarding else Route.Tabs
+        }
+        var route by remember { mutableStateOf<Route>(initialRoute) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var refreshKey by remember { mutableStateOf(0) }
 
@@ -62,7 +67,8 @@ fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
         val debtsVm = remember(refreshKey) { DebtsViewModel(repos) }
 
         // Intercept system back to navigate within the app instead of exiting.
-        SystemBackHandler(enabled = route !is Route.Tabs) {
+        // Onboarding is excluded — back on the first slide should exit the app normally.
+        SystemBackHandler(enabled = route !is Route.Tabs && route !is Route.Onboarding) {
             route = Route.Tabs
             refreshKey++
         }
@@ -83,7 +89,7 @@ fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
                 AnimatedContent(
                     targetState = route,
                     transitionSpec = {
-                        val forward = initialState is Route.Tabs
+                        val forward = initialState is Route.Tabs || initialState is Route.Onboarding
                         if (forward) {
                             (slideInHorizontally(tween(250)) { it } + fadeIn(tween(250))) togetherWith
                                 (slideOutHorizontally(tween(250)) { -it } + fadeOut(tween(250)))
@@ -95,6 +101,12 @@ fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
                     label = "route",
                 ) { r ->
                     when (r) {
+                        is Route.Onboarding -> OnboardingScreen(
+                            onComplete = {
+                                repos.settings.markFirstLaunchSeen()
+                                route = Route.Tabs
+                            },
+                        )
                         is Route.Tabs -> {
                             when (tab) {
                                 Tab.Home -> HomeScreen(homeVm)
