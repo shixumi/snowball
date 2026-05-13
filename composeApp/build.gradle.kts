@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sqldelight.android.driver)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

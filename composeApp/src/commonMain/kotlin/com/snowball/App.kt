@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.snowball.data.Repos
+import com.snowball.platform.NotificationScheduler
 import com.snowball.ui.categories.CategoryManagementScreen
 import com.snowball.ui.categories.CategoryManagementViewModel
 import com.snowball.ui.debts.DebtsScreen
@@ -51,7 +52,7 @@ sealed interface Route {
 }
 
 @Composable
-fun App(repos: Repos) {
+fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
     SnowballTheme {
         var route by remember { mutableStateOf<Route>(Route.Tabs) }
         var tab by remember { mutableStateOf(Tab.Home) }
@@ -108,7 +109,7 @@ fun App(repos: Repos) {
                                     InsightsScreen(insightsVm)
                                 }
                                 Tab.Settings -> {
-                                    val settingsVm = remember(refreshKey) { SettingsViewModel(repos) }
+                                    val settingsVm = remember(refreshKey) { SettingsViewModel(repos, notificationScheduler) }
                                     SettingsScreen(
                                         vm = settingsVm,
                                         onManageCategories = { route = Route.CategoryManagement },

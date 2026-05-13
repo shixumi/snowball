@@ -18,12 +18,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +42,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.platform.rememberHaptics
+import com.snowball.platform.rememberRequestNotificationPermission
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.toFormFieldString
@@ -55,6 +62,7 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
     var hasFocus by remember { mutableStateOf(false) }
     var lastCommitted by remember { mutableStateOf(initial.incomePerCutoff) }
     var ackVisible by remember { mutableStateOf(false) }
+    val haptics = rememberHaptics()
 
     LaunchedEffect(ackVisible) {
         if (ackVisible) {
@@ -156,9 +164,101 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
             )
         }
 
+        // ── NOTIFICATIONS ──────────────────────────────────────────────
+        Spacer(Modifier.height(28.dp))
+        Text(
+            "NOTIFICATIONS",
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+            color = SnowColors.FrostDim,
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // Toggle row
+        var notifEnabled by remember { mutableStateOf(vm.notificationsEnabled) }
+        val requestPermission = rememberRequestNotificationPermission { granted ->
+            if (granted) {
+                vm.setNotificationsEnabled(true)
+                notifEnabled = true
+                haptics.tick()
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Payday reminders", modifier = Modifier.weight(1f), color = SnowColors.Frost)
+            Switch(
+                checked = notifEnabled,
+                onCheckedChange = { wantOn ->
+                    if (wantOn) {
+                        requestPermission()
+                    } else {
+                        vm.setNotificationsEnabled(false)
+                        notifEnabled = false
+                        haptics.tick()
+                    }
+                },
+            )
+        }
+
+        // Time picker row
+        var showTimePicker by remember { mutableStateOf(false) }
+        var notifHour by remember { mutableStateOf(vm.notificationHour) }
+        var notifMinute by remember { mutableStateOf(vm.notificationMinute) }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(enabled = notifEnabled) { showTimePicker = true }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Reminder time",
+                modifier = Modifier.weight(1f),
+                color = if (notifEnabled) SnowColors.Frost else SnowColors.FrostDim,
+            )
+            Text(
+                "%02d:%02d".format(notifHour, notifMinute),
+                color = if (notifEnabled) SnowColors.Frost else SnowColors.FrostDim,
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Reminds on the 15th and last day of each month.",
+            style = MaterialTheme.typography.bodySmall,
+            color = SnowColors.FrostMute,
+        )
+
+        if (showTimePicker) {
+            val state = rememberTimePickerState(initialHour = notifHour, initialMinute = notifMinute)
+            AlertDialog(
+                onDismissRequest = { showTimePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.setNotificationTime(state.hour, state.minute)
+                        notifHour = state.hour
+                        notifMinute = state.minute
+                        showTimePicker = false
+                        haptics.tick()
+                    }) { Text("Set") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                },
+                text = {
+                    TimePicker(state = state)
+                },
+                containerColor = SnowColors.CardElev,
+            )
+        }
+
         Spacer(Modifier.height(40.dp))
         Text(
-            "Snowball v0.2.2",
+            "Snowball v0.3.0",
             style = MaterialTheme.typography.labelSmall,
             color = SnowColors.FrostMute,
         )
