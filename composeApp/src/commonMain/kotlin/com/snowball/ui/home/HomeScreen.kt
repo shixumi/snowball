@@ -64,6 +64,7 @@ import com.snowball.ui.components.JourneyCard
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ProgressArc
 import com.snowball.ui.components.StaggeredItem
+import com.snowball.ui.components.SwipeCoachmark
 import com.snowball.ui.components.UpNextCard
 import com.snowball.ui.components.celebratePaid
 import com.snowball.ui.theme.SnowColors
@@ -80,6 +81,11 @@ fun HomeScreen(vm: HomeViewModel) {
             kotlinx.coroutines.delay(60_000)
             tick++
         }
+    }
+
+    val hasUnpaidRow = state.rows.any { !it.isPaidThisCycle }
+    var coachmarkVisible by remember(state.swipeCoachmarkSeen, hasUnpaidRow) {
+        mutableStateOf(!state.swipeCoachmarkSeen && hasUnpaidRow)
     }
 
     var pendingCatchUp by remember { mutableStateOf<OverdueInfo?>(null) }
@@ -168,6 +174,15 @@ fun HomeScreen(vm: HomeViewModel) {
         )
 
         Spacer(Modifier.height(8.dp))
+        if (coachmarkVisible) {
+            SwipeCoachmark(
+                visible = coachmarkVisible,
+                onDismiss = {
+                    coachmarkVisible = false
+                    vm.markSwipeCoachmarkSeen()
+                },
+            )
+        }
         if (state.rows.isEmpty()) {
             val message = when {
                 state.income == 0.0 -> "Set your income in Settings to get started."
@@ -187,7 +202,14 @@ fun HomeScreen(vm: HomeViewModel) {
                     StaggeredItem(index = i) {
                         SwipeablePaymentRow(
                             row = row,
-                            onMarkPaid = { vm.markPaid(row); tick++ },
+                            onMarkPaid = {
+                                if (coachmarkVisible) {
+                                    coachmarkVisible = false
+                                    vm.markSwipeCoachmarkSeen()
+                                }
+                                vm.markPaid(row)
+                                tick++
+                            },
                             onUndo = { vm.undoPayment(row); tick++ },
                         )
                     }

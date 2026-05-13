@@ -23,6 +23,7 @@ data class HomeState(
     val nextTotal: Double,
     val journey: JourneyStats?,
     val overdue: List<OverdueInfo>,
+    val swipeCoachmarkSeen: Boolean,
 )
 
 class HomeViewModel(private val repos: Repos) {
@@ -44,7 +45,8 @@ class HomeViewModel(private val repos: Repos) {
         val journey = JourneyCalculator.compute(allDebts, allPayments)
 
         val overdue = OverdueCalculator.computeOverdue(debts, paymentsByDebt, today)
-        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey, overdue)
+        val swipeCoachmarkSeen = repos.settings.get().swipeCoachmarkSeen
+        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey, overdue, swipeCoachmarkSeen)
     }
 
     fun markPaid(row: DueRow, todayDate: LocalDate = today()) {
@@ -62,6 +64,10 @@ class HomeViewModel(private val repos: Repos) {
         if (row.debt.isArchived) {
             repos.debts.setArchived(row.debt.id, false)
         }
+    }
+
+    fun markSwipeCoachmarkSeen() {
+        repos.settings.markSwipeCoachmarkSeen()
     }
 
     fun catchUpOverdue(info: OverdueInfo, todayDate: LocalDate = today()) {
