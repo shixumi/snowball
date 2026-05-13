@@ -51,6 +51,7 @@ import com.snowball.domain.SnapshotStats
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.cutoffRangeLabel
+import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import kotlin.math.abs
@@ -92,6 +93,31 @@ fun InsightsScreen(vm: InsightsViewModel) {
         ) {
             StaggeredItem(index = 0) {
                 SnapshotCard(stats = state.snapshot)
+            }
+            Spacer(Modifier.height(24.dp))
+            StaggeredItem(index = 1) {
+                Text(
+                    "PAYOFF TIMELINE",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 3.sp),
+                    color = SnowColors.FrostDim,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            if (state.payoffTimeline.isEmpty()) {
+                StaggeredItem(index = 2) {
+                    Text(
+                        "No active debts — you're free.",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                        color = SnowColors.FrostMute,
+                    )
+                }
+            } else {
+                state.payoffTimeline.forEachIndexed { idx, row ->
+                    StaggeredItem(index = 2 + idx) {
+                        PayoffTimelineRow(row)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
             }
             Spacer(Modifier.height(24.dp))
             Text(
@@ -196,6 +222,46 @@ private fun SnapshotCard(stats: SnapshotStats) {
                     color = SnowColors.FrostMute,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun PayoffTimelineRow(row: PayoffRow) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = row.category.icon(),
+            contentDescription = null,
+            tint = SnowColors.FrostDim,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                row.debt.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = SnowColors.Frost,
+            )
+            Text(
+                "${"%.2f".format(row.monthlyAmount)}/mo",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                row.endDate.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() } + " ${row.endDate.year}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = SnowColors.Frost,
+            )
+            Text(
+                row.endDate.toString(),
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
+            )
         }
     }
 }
