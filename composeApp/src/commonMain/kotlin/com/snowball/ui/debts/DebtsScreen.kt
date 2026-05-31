@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -165,13 +168,32 @@ fun DebtsScreen(
                     expanded = fabExpanded,
                     onDismissRequest = { fabExpanded = false },
                     offset = DpOffset(x = (-160).dp, y = 0.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = SnowColors.CardElev,
+                    border = BorderStroke(1.dp, SnowColors.LineStrong),
                 ) {
                     DropdownMenuItem(
                         text = { Text("Add debt", color = SnowColors.Frost) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.ReceiptLong,
+                                contentDescription = null,
+                                tint = SnowColors.Ice,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        },
                         onClick = { fabExpanded = false; onAddDebt() },
                     )
                     DropdownMenuItem(
                         text = { Text("Add MISC item", color = SnowColors.Frost) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.MoreHoriz,
+                                contentDescription = null,
+                                tint = SnowColors.FrostMute,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        },
                         onClick = { fabExpanded = false; onAddMisc() },
                     )
                 }

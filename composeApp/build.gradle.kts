@@ -59,12 +59,27 @@ android {
         applicationId = "com.snowball"
         minSdk = libs.versions.android.min.sdk.get().toInt()
         targetSdk = libs.versions.android.target.sdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.4.1"
+    }
+
+    signingConfigs {
+        // Personal sideload: sign release with the local debug keystore so the APK
+        // installs as an UPDATE over the existing build (matching signature) and
+        // preserves the user's data. A real Play upload key would differ.
+        create("release") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
-        getByName("release") { isMinifyEnabled = false }
+        getByName("release") {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     compileOptions {
