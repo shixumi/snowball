@@ -2,7 +2,9 @@ package com.snowball.domain
 
 import com.snowball.data.model.Debt
 import com.snowball.data.model.Payment
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 
 data class DueRow(
     val debt: Debt,
@@ -76,16 +78,25 @@ object CutoffCalculator {
         return null
     }
 
+    /**
+     * The previous cycle's due date, used as the exclusive lower bound that separates
+     * this cycle's payment from the prior cycle's.
+     *
+     * For the FIRST cycle there is no real prior cycle (the previous month's due date
+     * precedes firstPaymentDate). We must NOT clamp the bound up to firstPaymentDate —
+     * doing so rejects an on-time or early first payment (paidDate <= firstPaymentDate)
+     * and the row never registers as paid. Instead we use the (unclamped) previous
+     * month's due date, which sits a cycle-length before this one, so a first payment
+     * made any time around its due date is correctly attributed to this cycle.
+     */
     private fun priorCycleDueDate(debt: Debt, current: LocalDate): LocalDate {
         val (py, pm) = if (current.monthNumber == 1) (current.year - 1) to 12 else current.year to (current.monthNumber - 1)
         val prior = effectiveDueDate(
             year = py, month = pm,
             dueDay = debt.dueDay, useLastDay = debt.useLastDayOfMonth,
         )
-        return when {
-            prior == null -> debt.firstPaymentDate
-            prior < debt.firstPaymentDate -> debt.firstPaymentDate
-            else -> prior
-        }
+        // Fall back to one cycle before the first payment when the prior month has no
+        // matching day (e.g. dueDay 31 in a 30-day month with useLastDayOfMonth = false).
+        return prior ?: debt.firstPaymentDate.minus(1, DateTimeUnit.MONTH)
     }
 }

@@ -83,6 +83,33 @@ class CutoffCalculatorTest {
     }
 
     @Test
+    fun first_cycle_marked_paid_before_due_date_registers() {
+        // Regression (the "keep clicking, never sticks" bug): a freshly-added debt whose
+        // first payment is due later in the current window (due Jun 10, window May 30 - Jun 14)
+        // must register as paid when the user marks it paid earlier in the window (Jun 1).
+        // The first-cycle lower bound was clamped up to firstPaymentDate, so an early/on-time
+        // payment failed the `paidDate > priorEffective` test.
+        val c = Cutoff(2026, 5, Payday.THIRTIETH) // window May 30 -> Jun 14
+        val d = debt(dueDay = 10, start = LocalDate(2026, 5, 10), firstPayment = LocalDate(2026, 6, 10))
+        val pay = Payment(id = 1, debtId = d.id, paidDate = LocalDate(2026, 6, 1), amount = 1000.0)
+        val rows = CutoffCalculator.computeDueRows(c, listOf(d), mapOf(d.id to listOf(pay)))
+        assertEquals(1, rows.size)
+        assertEquals(LocalDate(2026, 6, 10), rows.first().effectiveDueDate)
+        assertTrue(rows.first().isPaidThisCycle, "First-cycle payment made before its due date must register as paid")
+    }
+
+    @Test
+    fun first_cycle_marked_paid_on_due_date_registers() {
+        // Paying exactly on the first-payment due date must also register.
+        val c = Cutoff(2026, 5, Payday.THIRTIETH)
+        val d = debt(dueDay = 10, start = LocalDate(2026, 5, 10), firstPayment = LocalDate(2026, 6, 10))
+        val pay = Payment(id = 1, debtId = d.id, paidDate = LocalDate(2026, 6, 10), amount = 1000.0)
+        val rows = CutoffCalculator.computeDueRows(c, listOf(d), mapOf(d.id to listOf(pay)))
+        assertEquals(1, rows.size)
+        assertTrue(rows.first().isPaidThisCycle, "First-cycle payment made on its due date must register as paid")
+    }
+
+    @Test
     fun debt_due_day_outside_window_excluded() {
         val c = Cutoff(2026, 5, Payday.FIFTEENTH)
         val rows = CutoffCalculator.computeDueRows(
