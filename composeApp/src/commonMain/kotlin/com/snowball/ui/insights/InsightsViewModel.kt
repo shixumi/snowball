@@ -36,6 +36,9 @@ class InsightsViewModel(private val repos: Repos) {
         val snapshot = InsightsCalculator.snapshot(active, paymentsByDebt, income)
         val forecast = InsightsCalculator.forecastCutoffs(today, active, paymentsByDebt, income, count = 12)
         val payoffTimeline = active
+            // A payoff timeline lists what's left to pay off; drop fully-paid debts
+            // (a completed debt is normally archived, but guard against any that aren't).
+            .filter { (paymentsByDebt[it.id]?.size ?: 0) < it.totalPayments }
             .mapNotNull { debt ->
                 val cat = catById[debt.categoryId] ?: return@mapNotNull null
                 val endDate = projectedEndDate(debt) ?: return@mapNotNull null
