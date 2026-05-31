@@ -4,12 +4,14 @@ Resume notes for picking up the project in a new session.
 
 ## What is this
 
-**Snowball** — a personal debt tracker for Android (Compose Multiplatform / Kotlin Multiplatform). Replaces a Google Sheet for tracking debts paid bi-monthly on 15th and 30th paydays. Currency is PHP (locked for v1). Theme is "Editorial Frost" — navy `#0B0F14` background, champagne and ice-blue accents, Fraunces (display) + DM Sans (body).
+**Snowball** — a personal debt tracker for Android (Compose Multiplatform / Kotlin Multiplatform). Replaces a Google Sheet for tracking debts paid bi-monthly on 15th and 30th paydays. Currency is PHP (locked for v1).
+
+**Identity = "Momentum"** (v0.4.0, replaced the earlier "Editorial Frost"). The debt-snowball *method*: visible progress + a kinetic payoff reward. Deep blue-night `#0A0E16` background; primary `Ice #5B8DEF` (vivid blue, interactive); `Charge #6FE3CE` (mint-cyan) for progress / cleared / streak. Type: **Space Grotesk** (display + numbers) + **Inter** (body, list names). All tokens live in `ui/theme/Color.kt` (`SnowColors`) and `Type.kt`; the design rationale is `docs/superpowers/specs/2026-06-01-momentum-redesign-design.md`.
 
 - **Repo:** `https://github.com/shixumi/snowball` (private; user `shixumi`)
 - **Working tree:** keep clean unless mid-task
 - **Branch:** `main`
-- **Current tag:** `v0.3.0`
+- **Current tag:** `v0.4.0`
 
 ## Where things are
 
@@ -85,6 +87,8 @@ SQLDelight schema: `composeApp/src/commonMain/sqldelight/com/snowball/db/`
 | v0.2.11 | UI polish pass 1: animated navbar, form cascade, press feedback, empty-state motion |
 | v0.2.12 | Identity (splash + snowflake glyph), mark-paid celebration, motion gaps, copy unification |
 | v0.3.0 | Notifications, haptics, onboarding flow, swipe coachmark, payoff timeline, db v4 |
+| (unreleased fixes) | Cutoff boundary moved to the 30th (15th=15–29, 30th=30→14 next month); first-cycle paid registration; completed debt stays in its final cutoff; payoff timeline drops fully-paid; back-nav returns to Home before exit; collapsible payoff timeline |
+| v0.4.0 | "Momentum" identity redesign — palette + Space Grotesk/Inter, unified ScreenHeader, CutoffCard paid/due progress bar, kinetic Charge payoff reward, UI formatting via shared formatters, glassy card edges + bottom-nav hairline |
 
 ## Architecture decisions / nuances
 
@@ -170,8 +174,11 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 - **`slideIntoContainer` / `slideOutOfContainer` are Android-only.** Use `slideInHorizontally` / `slideOutHorizontally` for cross-platform compatibility.
 - **`LocalContext` and `Manifest`/`Build` aren't accessible in commonMain.** Wrap any Android-specific UI hooks in expect/actual (see `Permissions.kt` / `Permissions.android.kt` for the pattern).
 - **WorkManager daily worker drift.** Periodic jobs can drift by several minutes; acceptable for payday notifications.
-- **Subagent self-check may flag Co-Authored-By trailers as "impersonation."** False positive — the project's commit pattern is `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`. Use that trailer.
+- **Commit trailers / authorship:** keep it simple and honest — `Co-Authored-By: Claude <noreply@anthropic.com>`. (Subagent self-checks have flagged fabricated model-version strings as impersonation; avoid version claims in the trailer.)
+- **Dev env after a PC reset (2026-06-01):** the reset wiped the toolchain. Reinstalled into user dirs: Android Studio JBR (`C:\Program Files\Android\Android Studio\jbr`), Android SDK (`%LOCALAPPDATA%\Android\Sdk`), **Node LTS** (`C:\Users\Pika\nodejs\node-v24.16.0-win-x64`), **Git** (`C:\Program Files\Git\cmd`), **winget** (re-registered). `JAVA_HOME`/`ANDROID_HOME`/PATH are set persistently, but the harness's shells may spawn with a cached PATH — prepend the tool dir to `$env:Path` inside a command if a bare `node`/`git` doesn't resolve.
+- **Visual companion (superpowers brainstorming) needs Node** — now installed. Launch via Git Bash `start-server.sh --project-dir`; on Windows it runs foreground, so use `run_in_background`. Some installs/extractions trip the tool sandbox with bogus "protected path" errors — re-run that one command with `dangerouslyDisableSandbox: true`.
+- **`SnowColors.Ice` is now a vivid blue `#5B8DEF`** (was a soft ice-blue). `Charge #6FE3CE` is the progress/cleared accent. Don't assume Ice is pale.
 
 ## How to resume
 
-> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. Current state is `v0.3.0`. The full feature backlog and architecture decisions are documented above. For next steps, common ones are: (a) verify notifications on the real S25 device (sideload v0.3.0 APK), (b) sub-project F (iOS/macOS/Windows targets — hardware-gated), (c) Insights v2 remaining items (by-category chart, snowball ranking, tap-to-drill, time-horizon switcher), (d) deferred polish (loading shimmer, custom branded transitions). Pick up from the user's first message.
+> Read `HANDOFF.md` in `C:\Users\Pika\projects\snowball`. Current state is `v0.4.0` (the "Momentum" identity redesign). The full feature backlog and architecture decisions are documented above. Likely next steps: (a) on-device pass on the S25 to eyeball the Momentum visuals (colors/type/progress bar/payoff reward can't be verified from here — no screenshot reads), (b) the deferred inspection items still open (tap-to-pay affordance, empty-state warmth, Settings scroll), (c) Insights v2 remainder (by-category chart, snowball ranking, tap-to-drill, time-horizon switcher), (d) sub-project F (iOS/macOS/Windows — hardware-gated). Pick up from the user's first message.
