@@ -4,31 +4,32 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.snowball.resources.Res
-import com.snowball.resources.Fraunces_Variable
-import com.snowball.resources.DMSans_Variable
+import com.snowball.resources.SpaceGrotesk_Variable
+import com.snowball.resources.Inter_Variable
 import org.jetbrains.compose.resources.Font
 
+// Momentum identity: Space Grotesk (kinetic display + numbers) + Inter (neutral body, scannable lists).
 @Composable
-fun fraunces(): FontFamily = FontFamily(Font(Res.font.Fraunces_Variable))
+fun spaceGrotesk(): FontFamily = FontFamily(Font(Res.font.SpaceGrotesk_Variable))
 
 @Composable
-fun dmSans(): FontFamily = FontFamily(Font(Res.font.DMSans_Variable))
+fun inter(): FontFamily = FontFamily(Font(Res.font.Inter_Variable))
 
 @Composable
 fun snowballTypography(): Typography {
-    val display = fraunces()
-    val body = dmSans()
+    val display = spaceGrotesk()
+    val body = inter()
     return Typography(
-        displayLarge = TextStyle(fontFamily = display, fontSize = 96.sp, fontWeight = FontWeight.W300),
-        displayMedium = TextStyle(fontFamily = display, fontSize = 64.sp, fontWeight = FontWeight.W400),
-        displaySmall = TextStyle(fontFamily = display, fontSize = 32.sp, fontWeight = FontWeight.W400),
-        headlineLarge = TextStyle(fontFamily = display, fontSize = 28.sp, fontWeight = FontWeight.W500),
-        headlineMedium = TextStyle(fontFamily = display, fontSize = 22.sp, fontWeight = FontWeight.W500),
-        headlineSmall = TextStyle(fontFamily = display, fontSize = 18.sp, fontWeight = FontWeight.W500),
+        // Confident, capped hero numerals (Momentum favours presence over thinness).
+        displayLarge = TextStyle(fontFamily = display, fontSize = 64.sp, fontWeight = FontWeight.W600),
+        displayMedium = TextStyle(fontFamily = display, fontSize = 46.sp, fontWeight = FontWeight.W600),
+        displaySmall = TextStyle(fontFamily = display, fontSize = 30.sp, fontWeight = FontWeight.W600),
+        headlineLarge = TextStyle(fontFamily = display, fontSize = 26.sp, fontWeight = FontWeight.W600),
+        headlineMedium = TextStyle(fontFamily = display, fontSize = 22.sp, fontWeight = FontWeight.W600),
+        headlineSmall = TextStyle(fontFamily = display, fontSize = 18.sp, fontWeight = FontWeight.W600),
         titleLarge = TextStyle(fontFamily = body, fontSize = 16.sp, fontWeight = FontWeight.Medium),
         titleMedium = TextStyle(fontFamily = body, fontSize = 14.sp, fontWeight = FontWeight.Medium),
         bodyLarge = TextStyle(fontFamily = body, fontSize = 16.sp, fontWeight = FontWeight.Normal),
@@ -39,5 +40,3 @@ fun snowballTypography(): Typography {
         labelSmall = TextStyle(fontFamily = body, fontSize = 10.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.5.sp),
     )
 }
-
-val FraunsesItalic: FontStyle = FontStyle.Italic
