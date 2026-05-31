@@ -39,7 +39,7 @@ fun Modifier.celebratePaid(paid: Boolean): Modifier {
         label = "celebrateScale",
     )
     val glow by animateColorAsState(
-        targetValue = if (celebrating) SnowColors.Ice.copy(alpha = 0.18f) else Color.Transparent,
+        targetValue = if (celebrating) SnowColors.Charge.copy(alpha = 0.22f) else Color.Transparent,
         animationSpec = tween(600, easing = FastOutSlowInEasing),
         label = "celebrateGlow",
     )

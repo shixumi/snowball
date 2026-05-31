@@ -22,7 +22,7 @@ fun ProgressArc(
     size: Dp = 26.dp,
     strokeDp: Dp = 2.dp,
     trackColor: Color = SnowColors.Line,
-    arcColor: Color = SnowColors.Ice,
+    arcColor: Color = SnowColors.Charge,
 ) {
     val animated by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),

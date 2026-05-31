@@ -73,7 +73,7 @@ fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
         Text(
             "$animatedPct%",
             style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.W300),
-            color = SnowColors.Ice,
+            color = SnowColors.Charge,
         )
         Spacer(Modifier.height(2.dp))
         Text(
@@ -115,14 +115,14 @@ fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Outlined.AcUnit,
                         contentDescription = null,
-                        tint = SnowColors.Ice,
+                        tint = SnowColors.Charge,
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "All clear",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = SnowColors.Ice,
+                        color = SnowColors.Charge,
                     )
                 }
             } else {
