@@ -125,10 +125,10 @@ class InsightsCalculatorTest {
 
     @Test
     fun forecast_starts_two_cutoffs_after_today() {
-        // today=May 13 → current cutoff: Apr 30 payday (windowStart May 1, windowEnd May 14)
-        // nextCutoff: May 15 payday (May 15-30)
-        // nextCutoff.next(): May 30 payday (June 1-14)
-        // So first forecast cutoff should have windowStart June 1.
+        // today=May 13 → current cutoff: Apr 30 payday (windowStart Apr 30, windowEnd May 14)
+        // nextCutoff: May 15 payday (May 15-29)
+        // nextCutoff.next(): May 30 payday (May 30 - June 14)
+        // So first forecast cutoff should have windowStart May 30.
         val d = debt(firstPaymentDate = LocalDate(2026, 1, 10), totalPayments = 36, dueDay = 10)
         val f = InsightsCalculator.forecastCutoffs(
             today = LocalDate(2026, 5, 13),
@@ -138,7 +138,7 @@ class InsightsCalculatorTest {
             count = 1,
         )
         assertEquals(1, f.size)
-        assertEquals(LocalDate(2026, 6, 1), f[0].cutoff.windowStart)
+        assertEquals(LocalDate(2026, 5, 30), f[0].cutoff.windowStart)
         assertEquals(LocalDate(2026, 6, 14), f[0].cutoff.windowEnd)
     }
 

@@ -47,6 +47,42 @@ class CutoffCalculatorTest {
     }
 
     @Test
+    fun debt_due_day_30_belongs_to_30th_cutoff_not_15th() {
+        // The reported bug: a bill due on the 30th was being filed under the 15th
+        // cutoff. With the corrected boundary, day 30 belongs to the 30th cutoff.
+        val d = debt(dueDay = 30)
+
+        val fifteenth = CutoffCalculator.computeDueRows(
+            cutoff = Cutoff(2026, 5, Payday.FIFTEENTH),
+            activeDebts = listOf(d),
+            paymentsByDebt = emptyMap(),
+        )
+        assertEquals(0, fifteenth.size, "Day-30 debt must NOT appear in the 15th cutoff")
+
+        val thirtieth = CutoffCalculator.computeDueRows(
+            cutoff = Cutoff(2026, 5, Payday.THIRTIETH),
+            activeDebts = listOf(d),
+            paymentsByDebt = emptyMap(),
+        )
+        assertEquals(1, thirtieth.size, "Day-30 debt must appear in the 30th cutoff")
+        assertEquals(LocalDate(2026, 5, 30), thirtieth.first().effectiveDueDate)
+    }
+
+    @Test
+    fun debt_due_day_5_in_30th_cutoff_resolves_to_next_month() {
+        // The 30th cutoff spans a month boundary (May 30 -> Jun 14). A bill due on
+        // the 5th lands on June 5, inside that window.
+        val d = debt(dueDay = 5)
+        val rows = CutoffCalculator.computeDueRows(
+            cutoff = Cutoff(2026, 5, Payday.THIRTIETH),
+            activeDebts = listOf(d),
+            paymentsByDebt = emptyMap(),
+        )
+        assertEquals(1, rows.size)
+        assertEquals(LocalDate(2026, 6, 5), rows.first().effectiveDueDate)
+    }
+
+    @Test
     fun debt_due_day_outside_window_excluded() {
         val c = Cutoff(2026, 5, Payday.FIFTEENTH)
         val rows = CutoffCalculator.computeDueRows(

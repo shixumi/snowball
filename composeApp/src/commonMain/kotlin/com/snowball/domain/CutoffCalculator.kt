@@ -19,15 +19,12 @@ object CutoffCalculator {
     ): List<DueRow> {
         val rows = mutableListOf<DueRow>()
         for (debt in activeDebts) {
-            val effective = effectiveDueDate(
-                year = cutoff.windowStart.year,
-                month = cutoff.windowStart.monthNumber,
-                dueDay = debt.dueDay,
-                useLastDay = debt.useLastDayOfMonth,
-            ) ?: continue
+            // The 30th cutoff's window spans a month boundary (e.g. May 30 -> Jun 14),
+            // so the debt's due date for this cutoff may land in either month.
+            val effective = candidateDueDate(debt, cutoff) ?: continue
 
-            if (effective < cutoff.windowStart || effective > cutoff.windowEnd) continue
-            if (debt.firstPaymentDate > cutoff.payDate) continue
+            // Skip cycles before the debt's first payment is due.
+            if (effective < debt.firstPaymentDate) continue
 
             val priorEffective = priorCycleDueDate(debt, effective)
             val payments = paymentsByDebt[debt.id].orEmpty()
@@ -59,6 +56,24 @@ object CutoffCalculator {
             paidTotal = paid,
             breathingRoom = incomePerCutoff - due,
         )
+    }
+
+    /**
+     * The debt's due date that falls within this cutoff's window, or null if none does.
+     * Because the 30th cutoff's window crosses a month boundary, we check the debt's
+     * dueDay in both the window's start month and its end month.
+     */
+    private fun candidateDueDate(debt: Debt, cutoff: Cutoff): LocalDate? {
+        val ws = cutoff.windowStart
+        val we = cutoff.windowEnd
+        val inStartMonth = effectiveDueDate(ws.year, ws.monthNumber, debt.dueDay, debt.useLastDayOfMonth)
+        if (inStartMonth != null && inStartMonth >= ws && inStartMonth <= we) return inStartMonth
+        val crossesMonth = ws.monthNumber != we.monthNumber || ws.year != we.year
+        if (crossesMonth) {
+            val inEndMonth = effectiveDueDate(we.year, we.monthNumber, debt.dueDay, debt.useLastDayOfMonth)
+            if (inEndMonth != null && inEndMonth >= ws && inEndMonth <= we) return inEndMonth
+        }
+        return null
     }
 
     private fun priorCycleDueDate(debt: Debt, current: LocalDate): LocalDate {

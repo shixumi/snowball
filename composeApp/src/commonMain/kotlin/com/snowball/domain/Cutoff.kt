@@ -17,16 +17,18 @@ data class Cutoff(
 
     val windowStart: LocalDate
         get() = when (payday) {
+            // The 15th paycheck covers from the 15th.
             Payday.FIFTEENTH -> LocalDate(year, month, 15)
-            Payday.THIRTIETH -> {
-                val (ny, nm) = nextYearMonth()
-                LocalDate(ny, nm, 1)
-            }
+            // The 30th paycheck covers from the 30th (or the last day in shorter months).
+            Payday.THIRTIETH -> LocalDate(year, month, minOf(30, lastDayOfMonth(year, month)))
         }
 
     val windowEnd: LocalDate
         get() = when (payday) {
-            Payday.FIFTEENTH -> LocalDate(year, month, minOf(30, lastDayOfMonth(year, month)))
+            // The 15th cutoff ends the day before the 30th payday (29th, or earlier in
+            // shorter months — e.g. the 27th in a 28-day February).
+            Payday.FIFTEENTH -> LocalDate(year, month, minOf(30, lastDayOfMonth(year, month)) - 1)
+            // The 30th cutoff runs through the 14th of the next month.
             Payday.THIRTIETH -> {
                 val (ny, nm) = nextYearMonth()
                 LocalDate(ny, nm, 14)
@@ -55,11 +57,17 @@ data class Cutoff(
 
 fun currentCutoff(today: LocalDate): Cutoff {
     val day = today.dayOfMonth
-    return if (day in 1..14) {
-        val (py, pm) = if (today.monthNumber == 1) (today.year - 1) to 12 else today.year to (today.monthNumber - 1)
-        Cutoff(py, pm, Payday.THIRTIETH)
-    } else {
-        Cutoff(today.year, today.monthNumber, Payday.FIFTEENTH)
+    val thirtiethPayday = minOf(30, lastDayOfMonth(today.year, today.monthNumber))
+    return when {
+        // Days 1-14 belong to the previous month's 30th cutoff (which runs through the 14th).
+        day in 1..14 -> {
+            val (py, pm) = if (today.monthNumber == 1) (today.year - 1) to 12 else today.year to (today.monthNumber - 1)
+            Cutoff(py, pm, Payday.THIRTIETH)
+        }
+        // Days 15 up to (but not including) the 30th payday belong to the 15th cutoff.
+        day < thirtiethPayday -> Cutoff(today.year, today.monthNumber, Payday.FIFTEENTH)
+        // The 30th payday onward (30th, 31st, or the last day in shorter months) belongs to the 30th cutoff.
+        else -> Cutoff(today.year, today.monthNumber, Payday.THIRTIETH)
     }
 }
 
