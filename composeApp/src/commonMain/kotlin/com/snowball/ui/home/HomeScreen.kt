@@ -62,6 +62,7 @@ import com.snowball.domain.OverdueInfo
 import com.snowball.ui.components.CutoffCard
 import com.snowball.ui.components.JourneyCard
 import com.snowball.ui.components.PesoText
+import com.snowball.ui.components.ScreenHeader
 import com.snowball.ui.components.ProgressArc
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.SwipeCoachmark
@@ -93,20 +94,7 @@ fun HomeScreen(vm: HomeViewModel) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Outlined.AcUnit,
-                contentDescription = null,
-                tint = SnowColors.Frost,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Snowball",
-                style = MaterialTheme.typography.titleLarge,
-                color = SnowColors.Frost,
-            )
-        }
+        ScreenHeader("Snowball")
         Spacer(Modifier.height(16.dp))
         CutoffCard(
             cutoff = state.cutoff,

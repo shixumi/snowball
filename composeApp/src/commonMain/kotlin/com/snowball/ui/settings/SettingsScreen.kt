@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.platform.rememberHaptics
 import com.snowball.platform.rememberRequestNotificationPermission
+import com.snowball.ui.components.ScreenHeader
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.toFormFieldString
@@ -72,7 +73,7 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-        Text("Settings", style = MaterialTheme.typography.headlineLarge, color = SnowColors.Frost)
+        ScreenHeader("Settings")
         Spacer(Modifier.height(24.dp))
 
         Text(

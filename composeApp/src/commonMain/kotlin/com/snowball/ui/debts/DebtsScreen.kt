@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.ui.components.PesoText
+import com.snowball.ui.components.ScreenHeader
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.icon
 import com.snowball.ui.components.pressScale
@@ -67,23 +68,10 @@ fun DebtsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                ScreenHeader(
+                    if (state.showArchived) "Archived" else "Active",
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.AcUnit,
-                        contentDescription = null,
-                        tint = SnowColors.Frost,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        if (state.showArchived) "Archived" else "Active",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = SnowColors.Frost,
-                    )
-                }
+                )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { vm.toggleArchive(); tick++ },
