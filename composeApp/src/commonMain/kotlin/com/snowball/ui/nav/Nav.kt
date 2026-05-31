@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,6 +63,7 @@ fun BottomNav(
             .fillMaxWidth()
             .background(SnowColors.NightElev),
     ) {
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(SnowColors.LineStrong))
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
             Tab.entries.forEach { tab ->
                 val active = tab == selected

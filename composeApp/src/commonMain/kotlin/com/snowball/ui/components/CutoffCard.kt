@@ -46,7 +46,7 @@ fun CutoffCard(
                     colors = listOf(SnowColors.CardElev, SnowColors.NightElev)
                 )
             )
-            .border(width = 1.dp, color = SnowColors.LineStrong, shape = RoundedCornerShape(28.dp))
+            .border(1.dp, Brush.verticalGradient(listOf(SnowColors.TopHighlight, SnowColors.LineStrong)), RoundedCornerShape(28.dp))
             .padding(horizontal = 24.dp, vertical = 28.dp),
     ) {
         Text(

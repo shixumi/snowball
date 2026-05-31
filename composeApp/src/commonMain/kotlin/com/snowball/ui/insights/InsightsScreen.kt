@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -164,7 +165,7 @@ private fun SnapshotCard(stats: SnapshotStats) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(SnowColors.CardElev)
-            .border(1.dp, SnowColors.LineStrong, RoundedCornerShape(28.dp))
+            .border(1.dp, Brush.verticalGradient(listOf(SnowColors.TopHighlight, SnowColors.LineStrong)), RoundedCornerShape(28.dp))
             .padding(horizontal = 24.dp, vertical = 24.dp),
     ) {
         Text(

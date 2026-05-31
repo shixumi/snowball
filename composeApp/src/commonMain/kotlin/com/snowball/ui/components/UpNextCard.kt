@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -70,7 +71,7 @@ fun UpNextCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(SnowColors.NightElev)
-            .border(width = 1.dp, color = SnowColors.LineStrong, shape = RoundedCornerShape(28.dp))
+            .border(1.dp, Brush.verticalGradient(listOf(SnowColors.TopHighlight, SnowColors.LineStrong)), RoundedCornerShape(28.dp))
             .clickable {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggle()

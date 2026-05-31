@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -53,7 +54,7 @@ fun JourneyCard(stats: JourneyStats, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(SnowColors.CardElev)
-            .border(width = 1.dp, color = SnowColors.LineStrong, shape = RoundedCornerShape(28.dp))
+            .border(1.dp, Brush.verticalGradient(listOf(SnowColors.TopHighlight, SnowColors.LineStrong)), RoundedCornerShape(28.dp))
             .semantics(mergeDescendants = true) {
                 contentDescription = "Your journey, ${stats.percentCleared} percent cleared, $meltedA11y, $forecastText"
             }
