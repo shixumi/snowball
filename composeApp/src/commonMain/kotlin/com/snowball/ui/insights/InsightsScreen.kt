@@ -54,6 +54,7 @@ import com.snowball.ui.components.cutoffRangeLabel
 import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
+import com.snowball.ui.util.formatLongDate
 import kotlin.math.abs
 
 @Composable
@@ -244,7 +245,7 @@ private fun PayoffTimelineRow(row: PayoffRow) {
                 color = SnowColors.Frost,
             )
             Text(
-                "${"%.2f".format(row.monthlyAmount)}/mo",
+                "₱${formatAmountWithSeparators(row.monthlyAmount)}/mo",
                 style = MaterialTheme.typography.bodySmall,
                 color = SnowColors.FrostMute,
             )
@@ -256,7 +257,7 @@ private fun PayoffTimelineRow(row: PayoffRow) {
                 color = SnowColors.Frost,
             )
             Text(
-                row.endDate.toString(),
+                formatLongDate(row.endDate),
                 style = MaterialTheme.typography.bodySmall,
                 color = SnowColors.FrostMute,
             )

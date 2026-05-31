@@ -299,7 +299,7 @@ private fun PaymentRowContent(row: DueRow, onClick: () -> Unit) {
             .semantics(mergeDescendants = true) {
                 role = Role.Checkbox
                 stateDescription = if (row.isPaidThisCycle) "Paid" else "Not paid"
-                contentDescription = "${row.debt.name}, ₱${row.amount.toLong()}, due ${row.effectiveDueDate}"
+                contentDescription = "${row.debt.name}, ₱${row.amount.toLong()}, due ${formatLongDate(row.effectiveDueDate)}"
             }
             .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -316,7 +316,7 @@ private fun PaymentRowContent(row: DueRow, onClick: () -> Unit) {
                 color = if (row.isPaidThisCycle) SnowColors.FrostDim else SnowColors.Frost,
             )
             Text(
-                "Due ${row.effectiveDueDate}",
+                "Due ${formatLongDate(row.effectiveDueDate)}",
                 style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
                 color = SnowColors.FrostMute,
             )
