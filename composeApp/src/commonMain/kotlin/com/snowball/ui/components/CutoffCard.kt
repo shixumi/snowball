@@ -1,28 +1,33 @@
 package com.snowball.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.domain.Cutoff
 import com.snowball.domain.CutoffCalculator
 import com.snowball.ui.theme.SnowColors
+import com.snowball.ui.util.formatAmountWithSeparators
 import kotlin.math.abs
 
 @Composable
@@ -65,51 +70,66 @@ fun CutoffCard(
         Spacer(Modifier.height(12.dp))
         PesoText(
             amount = summary.dueTotal,
-            style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.W300),
+            style = MaterialTheme.typography.displayLarge,
             pesoColor = SnowColors.FrostMute,
             numberColor = SnowColors.Frost,
             animate = true,
         )
 
-        Spacer(Modifier.height(20.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)),
-            verticalArrangement = Arrangement.spacedBy(1.dp),
-        ) {
-            LedgerCell(
-                label = "INCOME",
-                amount = incomePerCutoff,
-                color = SnowColors.Frost,
-                modifier = Modifier.fillMaxWidth(),
+        // Momentum: paid/due progress this cutoff.
+        if (summary.dueTotal > 0.0) {
+            Spacer(Modifier.height(18.dp))
+            val fraction = (summary.paidTotal / summary.dueTotal).coerceIn(0.0, 1.0).toFloat()
+            val animFraction by animateFloatAsState(
+                targetValue = fraction,
+                animationSpec = tween(600, easing = FastOutSlowInEasing),
+                label = "cutoffProgress",
             )
-            val isShort = summary.breathingRoom < 0
-            LedgerCell(
-                label = if (isShort) "SHORT BY" else "LEFT OVER",
-                amount = abs(summary.breathingRoom),
-                color = if (isShort) SnowColors.Ember else SnowColors.Ice,
-                modifier = Modifier.fillMaxWidth(),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(SnowColors.ChargeSoft),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animFraction)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(SnowColors.Charge),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "₱${formatAmountWithSeparators(summary.paidTotal)} of ₱${formatAmountWithSeparators(summary.dueTotal)} paid this cutoff",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostMute,
             )
         }
-    }
-}
 
-@Composable
-private fun LedgerCell(label: String, amount: Double, color: Color, modifier: Modifier) {
-    Column(
-        modifier = modifier
-            .background(SnowColors.Night.copy(alpha = 0.6f))
-            .padding(20.dp),
-    ) {
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp), color = SnowColors.FrostDim)
-        Spacer(Modifier.height(8.dp))
-        PesoText(
-            amount = amount,
-            style = MaterialTheme.typography.headlineLarge,
-            pesoColor = SnowColors.FrostDim,
-            numberColor = color,
-            animate = true,
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Income ₱${formatAmountWithSeparators(incomePerCutoff)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = SnowColors.FrostDim,
         )
+        Spacer(Modifier.height(6.dp))
+        val isShort = summary.breathingRoom < 0
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (isShort) "SHORT BY" else "LEFT OVER",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
+                color = SnowColors.FrostDim,
+            )
+            Spacer(Modifier.width(10.dp))
+            PesoText(
+                amount = abs(summary.breathingRoom),
+                style = MaterialTheme.typography.headlineMedium,
+                pesoColor = SnowColors.FrostDim,
+                numberColor = if (isShort) SnowColors.Ember else SnowColors.Ice,
+            )
+        }
     }
 }
 
