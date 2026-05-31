@@ -83,6 +83,42 @@ class CutoffCalculatorTest {
     }
 
     @Test
+    fun completed_debt_shows_in_cutoff_of_its_final_due_date() {
+        // 6 payments, firstPayment Jan 10, dueDay 10 -> final due date Jun 10,
+        // which falls in the May 30 cutoff window (May 30 - Jun 14).
+        val d = debt(dueDay = 10, total = 6, start = LocalDate(2026, 1, 10),
+            firstPayment = LocalDate(2026, 1, 10), archived = true)
+        val c = Cutoff(2026, 5, Payday.THIRTIETH)
+        assertTrue(completedDebtDueInCutoff(d, paymentCount = 6, cutoff = c))
+    }
+
+    @Test
+    fun completed_debt_absent_from_other_cutoffs() {
+        val d = debt(dueDay = 10, total = 6, start = LocalDate(2026, 1, 10),
+            firstPayment = LocalDate(2026, 1, 10), archived = true)
+        // Jun 15 cutoff window is Jun 15-29; final due date Jun 10 is not in it.
+        val c = Cutoff(2026, 6, Payday.FIFTEENTH)
+        assertEquals(false, completedDebtDueInCutoff(d, paymentCount = 6, cutoff = c))
+    }
+
+    @Test
+    fun active_debt_is_not_a_completed_row() {
+        val d = debt(dueDay = 10, total = 6, start = LocalDate(2026, 1, 10),
+            firstPayment = LocalDate(2026, 1, 10), archived = false)
+        val c = Cutoff(2026, 5, Payday.THIRTIETH)
+        assertEquals(false, completedDebtDueInCutoff(d, paymentCount = 6, cutoff = c))
+    }
+
+    @Test
+    fun manually_archived_incomplete_debt_excluded() {
+        // Archived but only 5 of 6 paid -> not "completed", stays hidden.
+        val d = debt(dueDay = 10, total = 6, start = LocalDate(2026, 1, 10),
+            firstPayment = LocalDate(2026, 1, 10), archived = true)
+        val c = Cutoff(2026, 5, Payday.THIRTIETH)
+        assertEquals(false, completedDebtDueInCutoff(d, paymentCount = 5, cutoff = c))
+    }
+
+    @Test
     fun first_cycle_marked_paid_before_due_date_registers() {
         // Regression (the "keep clicking, never sticks" bug): a freshly-added debt whose
         // first payment is due later in the current window (due Jun 10, window May 30 - Jun 14)

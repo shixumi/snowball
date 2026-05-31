@@ -100,3 +100,16 @@ object CutoffCalculator {
         return prior ?: debt.firstPaymentDate.minus(1, DateTimeUnit.MONTH)
     }
 }
+
+/**
+ * True when [debt] is a fully-paid, archived debt whose final scheduled due date
+ * falls within [cutoff]'s window. Used to keep a just-completed debt visible as a
+ * paid row in the single cutoff its last payment belongs to. The payment-count gate
+ * excludes debts archived manually before completion.
+ */
+fun completedDebtDueInCutoff(debt: Debt, paymentCount: Int, cutoff: Cutoff): Boolean {
+    if (!debt.isArchived) return false
+    if (paymentCount < debt.totalPayments) return false
+    val end = projectedEndDate(debt) ?: return false
+    return end >= cutoff.windowStart && end <= cutoff.windowEnd
+}
