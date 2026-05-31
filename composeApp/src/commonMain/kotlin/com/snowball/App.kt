@@ -66,11 +66,20 @@ fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
         val homeVm = remember(refreshKey) { HomeViewModel(repos) }
         val debtsVm = remember(refreshKey) { DebtsViewModel(repos) }
 
-        // Intercept system back to navigate within the app instead of exiting.
-        // Onboarding is excluded — back on the first slide should exit the app normally.
-        SystemBackHandler(enabled = route !is Route.Tabs && route !is Route.Onboarding) {
-            route = Route.Tabs
-            refreshKey++
+        // Intercept system back to walk toward Home instead of exiting:
+        //  - from a sub-screen (form/detail/etc) → back to the tab bar
+        //  - from a non-Home tab → back to Home
+        //  - from Home (or Onboarding) → handler disabled, so the app exits normally
+        val onNonHomeTab = route is Route.Tabs && tab != Tab.Home
+        SystemBackHandler(
+            enabled = (route !is Route.Tabs && route !is Route.Onboarding) || onNonHomeTab,
+        ) {
+            if (route !is Route.Tabs) {
+                route = Route.Tabs
+                refreshKey++
+            } else {
+                tab = Tab.Home
+            }
         }
 
         Column(
