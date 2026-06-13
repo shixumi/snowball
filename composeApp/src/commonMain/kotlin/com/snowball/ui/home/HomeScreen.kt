@@ -10,6 +10,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -96,6 +98,37 @@ fun HomeScreen(vm: HomeViewModel) {
     ) {
         ScreenHeader("Snowball")
         Spacer(Modifier.height(16.dp))
+        if (state.isActivatedEarly) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SnowColors.IceSoft)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Bolt,
+                    contentDescription = null,
+                    tint = SnowColors.Ice,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Next payday — activated early",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SnowColors.Frost,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "Undo",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = SnowColors.Ice,
+                    modifier = Modifier.clickable { vm.undoActivateEarly(); tick++ },
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+        }
         CutoffCard(
             cutoff = state.cutoff,
             summary = state.summary,
@@ -112,6 +145,32 @@ fun HomeScreen(vm: HomeViewModel) {
                 isExpanded = upNextExpanded,
                 onToggle = { upNextExpanded = !upNextExpanded },
             )
+        }
+
+        if (!state.isActivatedEarly && state.nextRows.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { vm.activateNextEarly(); tick++ }
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Bolt,
+                    contentDescription = null,
+                    tint = SnowColors.Ice,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Got paid early? Activate",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = SnowColors.Ice,
+                )
+            }
         }
 
         AnimatedVisibility(
