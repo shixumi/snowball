@@ -124,7 +124,10 @@ fun HomeScreen(vm: HomeViewModel) {
                     "Undo",
                     style = MaterialTheme.typography.labelLarge,
                     color = SnowColors.Ice,
-                    modifier = Modifier.clickable { vm.undoActivateEarly(); tick++ },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { vm.undoActivateEarly(); tick++ }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
             Spacer(Modifier.height(12.dp))

@@ -39,7 +39,10 @@ class HomeViewModel(private val repos: Repos) {
         // the calendar; otherwise fall back to today's cutoff and drop the stale override.
         val override = settings.paidAheadKey.takeIf { it.isNotBlank() }?.let { cutoffFromKey(it) }
         val eff = resolveEffectiveCutoff(today, override)
-        if (eff.clearOverride) repos.settings.clearPaidAhead()
+        // load() stays a pure read: we don't write here. A caught-up or stale override is
+        // harmlessly ignored by resolveEffectiveCutoff on every read (it only honors an
+        // override that's still ahead of the calendar), and it's overwritten the next time
+        // the user activates early — so no DB-write side effect during composition.
         val cutoff = eff.cutoff
         val next = cutoff.next()
 
