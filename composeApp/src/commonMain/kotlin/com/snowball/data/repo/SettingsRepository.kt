@@ -15,7 +15,16 @@ class SettingsRepository(private val db: SnowballDb) {
             notificationMinute = row.notificationMinute.toInt(),
             firstLaunchSeen = row.firstLaunchSeen == 1L,
             swipeCoachmarkSeen = row.swipeCoachmarkSeen == 1L,
+            paidAheadKey = row.paidAheadKey,
         )
+    }
+
+    fun setPaidAhead(key: String) {
+        db.settingsQueries.setPaidAhead(key)
+    }
+
+    fun clearPaidAhead() {
+        db.settingsQueries.clearPaidAhead()
     }
 
     fun setIncome(amount: Double) {

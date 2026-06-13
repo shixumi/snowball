@@ -7,7 +7,8 @@ CREATE TABLE Settings (
     notificationHour INTEGER NOT NULL DEFAULT 9,
     notificationMinute INTEGER NOT NULL DEFAULT 0,
     firstLaunchSeen INTEGER NOT NULL DEFAULT 0,
-    swipeCoachmarkSeen INTEGER NOT NULL DEFAULT 0
+    swipeCoachmarkSeen INTEGER NOT NULL DEFAULT 0,
+    paidAheadKey TEXT NOT NULL DEFAULT ''
 );
 
 select:
@@ -31,3 +32,9 @@ UPDATE Settings SET firstLaunchSeen = 1 WHERE id = 1;
 
 setSwipeCoachmarkSeen:
 UPDATE Settings SET swipeCoachmarkSeen = 1 WHERE id = 1;
+
+setPaidAhead:
+UPDATE Settings SET paidAheadKey = :paidAheadKey WHERE id = 1;
+
+clearPaidAhead:
+UPDATE Settings SET paidAheadKey = '' WHERE id = 1;

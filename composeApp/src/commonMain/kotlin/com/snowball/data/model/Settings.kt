@@ -8,4 +8,5 @@ data class Settings(
     val notificationMinute: Int,
     val firstLaunchSeen: Boolean,
     val swipeCoachmarkSeen: Boolean,
+    val paidAheadKey: String,
 )

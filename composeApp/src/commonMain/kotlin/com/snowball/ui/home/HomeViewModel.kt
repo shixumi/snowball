@@ -10,8 +10,10 @@ import com.snowball.domain.JourneyStats
 import com.snowball.domain.OverdueCalculator
 import com.snowball.domain.OverdueInfo
 import com.snowball.domain.completedDebtDueInCutoff
-import com.snowball.domain.currentCutoff
+import com.snowball.domain.cutoffFromKey
 import com.snowball.domain.nextCutoff
+import com.snowball.domain.resolveEffectiveCutoff
+import com.snowball.domain.storageKey
 import com.snowball.domain.today
 import kotlinx.datetime.LocalDate
 
@@ -26,13 +28,20 @@ data class HomeState(
     val journey: JourneyStats?,
     val overdue: List<OverdueInfo>,
     val swipeCoachmarkSeen: Boolean,
+    val isActivatedEarly: Boolean,
 )
 
 class HomeViewModel(private val repos: Repos) {
 
     fun load(today: LocalDate = today()): HomeState {
-        val cutoff = currentCutoff(today)
-        val next = nextCutoff(today)
+        val settings = repos.settings.get()
+        // Honor a manually-activated ("got paid early") cutoff while it's still ahead of
+        // the calendar; otherwise fall back to today's cutoff and drop the stale override.
+        val override = settings.paidAheadKey.takeIf { it.isNotBlank() }?.let { cutoffFromKey(it) }
+        val eff = resolveEffectiveCutoff(today, override)
+        if (eff.clearOverride) repos.settings.clearPaidAhead()
+        val cutoff = eff.cutoff
+        val next = cutoff.next()
 
         val active = repos.debts.allActive()
         val allDebts = repos.debts.all()
@@ -52,7 +61,7 @@ class HomeViewModel(private val repos: Repos) {
         val paymentsByDebt = displayIds.associateWith { repos.payments.historyForDebt(it) }
 
         val rows = CutoffCalculator.computeDueRows(cutoff, currentDebts, paymentsByDebt)
-        val income = repos.settings.get().incomePerCutoff
+        val income = settings.incomePerCutoff
         val summary = CutoffCalculator.summarize(rows, income)
 
         val nextRows = CutoffCalculator.computeDueRows(next, nextDebts, paymentsByDebt)
@@ -63,8 +72,19 @@ class HomeViewModel(private val repos: Repos) {
 
         // A completed debt is never overdue, so overdue runs over the active set only.
         val overdue = OverdueCalculator.computeOverdue(active, paymentsByDebt, today)
-        val swipeCoachmarkSeen = repos.settings.get().swipeCoachmarkSeen
-        return HomeState(cutoff, rows, summary, income, next, nextRows, nextTotal, journey, overdue, swipeCoachmarkSeen)
+        return HomeState(
+            cutoff, rows, summary, income, next, nextRows, nextTotal, journey, overdue,
+            swipeCoachmarkSeen = settings.swipeCoachmarkSeen,
+            isActivatedEarly = eff.isActivatedEarly,
+        )
+    }
+
+    fun activateNextEarly(today: LocalDate = today()) {
+        repos.settings.setPaidAhead(nextCutoff(today).storageKey())
+    }
+
+    fun undoActivateEarly() {
+        repos.settings.clearPaidAhead()
     }
 
     fun markPaid(row: DueRow, todayDate: LocalDate = today()) {
