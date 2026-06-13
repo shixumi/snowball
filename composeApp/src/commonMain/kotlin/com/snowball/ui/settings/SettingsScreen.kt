@@ -259,7 +259,7 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
 
         Spacer(Modifier.height(40.dp))
         Text(
-            "Snowball v0.4.1",
+            "Snowball v0.4.2",
             style = MaterialTheme.typography.labelSmall,
             color = SnowColors.FrostMute,
         )
