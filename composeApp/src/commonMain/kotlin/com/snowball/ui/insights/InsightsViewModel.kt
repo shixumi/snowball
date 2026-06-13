@@ -6,6 +6,7 @@ import com.snowball.data.model.CategoryBehavior
 import com.snowball.data.model.Debt
 import com.snowball.domain.CutoffForecast
 import com.snowball.domain.InsightsCalculator
+import com.snowball.domain.MonthForecast
 import com.snowball.domain.SnapshotStats
 import com.snowball.domain.projectedEndDate
 import com.snowball.domain.today
@@ -21,6 +22,7 @@ data class PayoffRow(
 data class InsightsState(
     val snapshot: SnapshotStats,
     val forecast: List<CutoffForecast>,
+    val monthForecast: List<MonthForecast>,
     val payoffTimeline: List<PayoffRow>,
 )
 
@@ -35,6 +37,7 @@ class InsightsViewModel(private val repos: Repos) {
         val income = repos.settings.get().incomePerCutoff
         val snapshot = InsightsCalculator.snapshot(active, paymentsByDebt, income)
         val forecast = InsightsCalculator.forecastCutoffs(today, active, paymentsByDebt, income, count = 12)
+        val monthForecast = InsightsCalculator.aggregateByMonth(forecast, income)
         val payoffTimeline = active
             // A payoff timeline lists what's left to pay off; drop fully-paid debts
             // (a completed debt is normally archived, but guard against any that aren't).
@@ -50,6 +53,6 @@ class InsightsViewModel(private val repos: Repos) {
                 )
             }
             .sortedBy { it.endDate }
-        return InsightsState(snapshot, forecast, payoffTimeline)
+        return InsightsState(snapshot, forecast, monthForecast, payoffTimeline)
     }
 }

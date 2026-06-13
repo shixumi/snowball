@@ -47,15 +47,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.domain.CutoffForecast
+import com.snowball.domain.MonthForecast
 import com.snowball.domain.SnapshotStats
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ScreenHeader
+import com.snowball.ui.components.SegmentedToggle
 import com.snowball.ui.components.StaggeredItem
 import com.snowball.ui.components.cutoffRangeLabel
 import com.snowball.ui.components.icon
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.formatLongDate
+import com.snowball.ui.util.formatMonthYear
+import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 
 @Composable
@@ -121,8 +125,9 @@ fun InsightsScreen(vm: InsightsViewModel) {
             }
         }
         Spacer(Modifier.height(24.dp))
+        var forecastView by remember { mutableStateOf(0) } // 0 = per cutoff, 1 = per month
         Text(
-            "UPCOMING (NEXT 6 MONTHS)",
+            "UPCOMING",
             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
             color = SnowColors.FrostDim,
         )
@@ -146,10 +151,35 @@ fun InsightsScreen(vm: InsightsViewModel) {
                 }
             }
         } else {
+            SegmentedToggle(
+                options = listOf("Per cutoff", "Per month"),
+                selectedIndex = forecastView,
+                onSelect = { forecastView = it },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.forecast.forEachIndexed { i, f ->
-                    StaggeredItem(index = i + 1) {
-                        ForecastRow(f)
+                if (forecastView == 0) {
+                    state.forecast.forEachIndexed { i, f ->
+                        StaggeredItem(index = i + 1) {
+                            ForecastSummaryRow(
+                                label = cutoffRangeLabel(f.cutoff),
+                                dueTotal = f.dueTotal,
+                                leftOver = f.leftOver,
+                                isAllClear = f.isAllClear,
+                            )
+                        }
+                    }
+                } else {
+                    state.monthForecast.forEachIndexed { i, m ->
+                        StaggeredItem(index = i + 1) {
+                            ForecastSummaryRow(
+                                label = formatMonthYear(LocalDate(m.year, m.month, 1)),
+                                dueTotal = m.dueTotal,
+                                leftOver = m.leftOver,
+                                isAllClear = m.isAllClear,
+                            )
+                        }
                     }
                 }
             }
@@ -267,8 +297,13 @@ private fun PayoffTimelineRow(row: PayoffRow) {
 }
 
 @Composable
-private fun ForecastRow(f: CutoffForecast) {
-    val isShort = !f.isAllClear && f.leftOver < 0
+private fun ForecastSummaryRow(
+    label: String,
+    dueTotal: Double,
+    leftOver: Double,
+    isAllClear: Boolean,
+) {
+    val isShort = !isAllClear && leftOver < 0
     val borderColor = if (isShort) SnowColors.Ember.copy(alpha = 0.4f) else SnowColors.LineStrong
     Row(
         modifier = Modifier
@@ -280,12 +315,12 @@ private fun ForecastRow(f: CutoffForecast) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            cutoffRangeLabel(f.cutoff),
+            label,
             style = MaterialTheme.typography.bodyLarge,
             color = SnowColors.Frost,
             modifier = Modifier.weight(1f),
         )
-        if (f.isAllClear) {
+        if (isAllClear) {
             var allClearVisible by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) { allClearVisible = true }
             val allClearScale by animateFloatAsState(
@@ -320,15 +355,15 @@ private fun ForecastRow(f: CutoffForecast) {
         } else {
             Column(horizontalAlignment = Alignment.End) {
                 PesoText(
-                    amount = f.dueTotal,
+                    amount = dueTotal,
                     style = MaterialTheme.typography.headlineSmall,
                     pesoColor = SnowColors.FrostDim,
                     numberColor = SnowColors.Frost,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    if (isShort) "SHORT BY ₱${formatAmountWithSeparators(abs(f.leftOver))}"
-                    else "₱${formatAmountWithSeparators(f.leftOver)} left",
+                    if (isShort) "SHORT BY ₱${formatAmountWithSeparators(abs(leftOver))}"
+                    else "₱${formatAmountWithSeparators(leftOver)} left",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isShort) SnowColors.Ember else SnowColors.FrostMute,
                 )
