@@ -19,6 +19,14 @@ data class CutoffForecast(
     val isAllClear: Boolean,
 )
 
+data class MonthForecast(
+    val year: Int,
+    val month: Int,
+    val dueTotal: Double,
+    val leftOver: Double,
+    val isAllClear: Boolean,
+)
+
 object InsightsCalculator {
 
     fun snapshot(
@@ -43,6 +51,29 @@ object InsightsCalculator {
             coveragePercent = coverage,
         )
     }
+
+    /**
+     * Rolls a per-cutoff forecast up into calendar months. Income for a month scales
+     * with how many of that month's paydays appear in the window (1 for a partial
+     * leading month, 2 for a full month), so left-over stays accurate.
+     */
+    fun aggregateByMonth(
+        cutoffs: List<CutoffForecast>,
+        incomePerCutoff: Double,
+    ): List<MonthForecast> =
+        cutoffs
+            .groupBy { it.cutoff.year to it.cutoff.month }
+            .map { (key, group) ->
+                val due = group.sumOf { it.dueTotal }
+                MonthForecast(
+                    year = key.first,
+                    month = key.second,
+                    dueTotal = due,
+                    leftOver = incomePerCutoff * group.size - due,
+                    isAllClear = group.all { it.isAllClear },
+                )
+            }
+            .sortedWith(compareBy({ it.year }, { it.month }))
 
     fun forecastCutoffs(
         today: LocalDate,

@@ -10,6 +10,72 @@ import kotlin.test.assertTrue
 
 class InsightsCalculatorTest {
 
+    private fun cf(year: Int, month: Int, payday: Payday, due: Double, allClear: Boolean = false) =
+        CutoffForecast(Cutoff(year, month, payday), dueTotal = due, leftOver = 0.0, isAllClear = allClear)
+
+    @Test
+    fun aggregate_merges_two_paydays_of_a_month() {
+        val rows = InsightsCalculator.aggregateByMonth(
+            listOf(
+                cf(2026, 6, Payday.FIFTEENTH, 3600.0),
+                cf(2026, 6, Payday.THIRTIETH, 8200.0),
+            ),
+            incomePerCutoff = 10000.0,
+        )
+        assertEquals(1, rows.size)
+        assertEquals(2026, rows[0].year); assertEquals(6, rows[0].month)
+        assertEquals(11800.0, rows[0].dueTotal)
+        assertEquals(20000.0 - 11800.0, rows[0].leftOver) // income*2 - due
+    }
+
+    @Test
+    fun aggregate_partial_month_scales_income_by_payday_count() {
+        val rows = InsightsCalculator.aggregateByMonth(
+            listOf(cf(2026, 6, Payday.THIRTIETH, 8200.0)),
+            incomePerCutoff = 10000.0,
+        )
+        assertEquals(1, rows.size)
+        assertEquals(10000.0 - 8200.0, rows[0].leftOver) // income*1 - due
+    }
+
+    @Test
+    fun aggregate_all_clear_only_when_every_payday_clear() {
+        val mixed = InsightsCalculator.aggregateByMonth(
+            listOf(
+                cf(2026, 6, Payday.FIFTEENTH, 0.0, allClear = true),
+                cf(2026, 6, Payday.THIRTIETH, 8200.0, allClear = false),
+            ),
+            incomePerCutoff = 10000.0,
+        )
+        assertEquals(false, mixed[0].isAllClear)
+
+        val clear = InsightsCalculator.aggregateByMonth(
+            listOf(
+                cf(2026, 6, Payday.FIFTEENTH, 0.0, allClear = true),
+                cf(2026, 6, Payday.THIRTIETH, 0.0, allClear = true),
+            ),
+            incomePerCutoff = 10000.0,
+        )
+        assertEquals(true, clear[0].isAllClear)
+    }
+
+    @Test
+    fun aggregate_sorts_across_year_boundary() {
+        val rows = InsightsCalculator.aggregateByMonth(
+            listOf(
+                cf(2027, 1, Payday.FIFTEENTH, 100.0),
+                cf(2026, 12, Payday.THIRTIETH, 200.0),
+            ),
+            incomePerCutoff = 10000.0,
+        )
+        assertEquals(listOf(2026 to 12, 2027 to 1), rows.map { it.year to it.month })
+    }
+
+    @Test
+    fun aggregate_empty_input_empty_output() {
+        assertTrue(InsightsCalculator.aggregateByMonth(emptyList(), 10000.0).isEmpty())
+    }
+
     private fun debt(
         id: Long = 1L,
         monthlyAmount: Double = 1500.0,
