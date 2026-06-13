@@ -72,3 +72,38 @@ fun currentCutoff(today: LocalDate): Cutoff {
 }
 
 fun nextCutoff(today: LocalDate = today()): Cutoff = currentCutoff(today).next()
+
+data class EffectiveCutoff(
+    val cutoff: Cutoff,
+    val isActivatedEarly: Boolean,
+    val clearOverride: Boolean,
+)
+
+/**
+ * The cutoff Home should treat as current. An [override] (a cutoff the user activated
+ * early) is honored only while it is still ahead of the calendar-derived current cutoff.
+ * Once today reaches or passes it — or the override is stale/behind — fall back to the
+ * date-current cutoff and signal [EffectiveCutoff.clearOverride] so the caller drops it.
+ */
+fun resolveEffectiveCutoff(today: LocalDate, override: Cutoff?): EffectiveCutoff {
+    val dateCurrent = currentCutoff(today)
+    if (override == null) return EffectiveCutoff(dateCurrent, isActivatedEarly = false, clearOverride = false)
+    return if (override.payDate > dateCurrent.payDate) {
+        EffectiveCutoff(override, isActivatedEarly = true, clearOverride = false)
+    } else {
+        EffectiveCutoff(dateCurrent, isActivatedEarly = false, clearOverride = true)
+    }
+}
+
+/** Stable, round-trippable string for persisting a cutoff (e.g. "2026-6-FIFTEENTH"). */
+fun Cutoff.storageKey(): String = "$year-$month-${payday.name}"
+
+fun cutoffFromKey(key: String): Cutoff? {
+    val parts = key.split("-")
+    if (parts.size != 3) return null
+    val year = parts[0].toIntOrNull() ?: return null
+    val month = parts[1].toIntOrNull() ?: return null
+    if (month !in 1..12) return null
+    val payday = Payday.entries.firstOrNull { it.name == parts[2] } ?: return null
+    return Cutoff(year, month, payday)
+}

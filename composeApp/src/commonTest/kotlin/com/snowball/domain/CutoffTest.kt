@@ -6,6 +6,61 @@ import kotlin.test.assertEquals
 
 class CutoffTest {
     @Test
+    fun storageKey_roundtrips() {
+        listOf(
+            Cutoff(2026, 6, Payday.FIFTEENTH),
+            Cutoff(2026, 6, Payday.THIRTIETH),
+            Cutoff(2026, 12, Payday.THIRTIETH),
+        ).forEach { c -> assertEquals(c, cutoffFromKey(c.storageKey())) }
+    }
+
+    @Test
+    fun cutoffFromKey_malformed_is_null() {
+        assertEquals(null, cutoffFromKey(""))
+        assertEquals(null, cutoffFromKey("2026-6"))
+        assertEquals(null, cutoffFromKey("2026-6-NOPE"))
+        assertEquals(null, cutoffFromKey("x-6-FIFTEENTH"))
+    }
+
+    @Test
+    fun resolveEffective_null_override_uses_date_current() {
+        val today = LocalDate(2026, 5, 20)
+        val e = resolveEffectiveCutoff(today, null)
+        assertEquals(currentCutoff(today), e.cutoff)
+        assertEquals(false, e.isActivatedEarly)
+        assertEquals(false, e.clearOverride)
+    }
+
+    @Test
+    fun resolveEffective_override_ahead_is_activated() {
+        val today = LocalDate(2026, 5, 13) // date-current = Apr 30 cutoff
+        val override = nextCutoff(today)    // May 15 cutoff (ahead)
+        val e = resolveEffectiveCutoff(today, override)
+        assertEquals(override, e.cutoff)
+        assertEquals(true, e.isActivatedEarly)
+        assertEquals(false, e.clearOverride)
+    }
+
+    @Test
+    fun resolveEffective_override_caught_up_clears() {
+        val today = LocalDate(2026, 5, 20)               // date-current = May 15 cutoff
+        val override = Cutoff(2026, 5, Payday.FIFTEENTH) // same as date-current now
+        val e = resolveEffectiveCutoff(today, override)
+        assertEquals(currentCutoff(today), e.cutoff)
+        assertEquals(false, e.isActivatedEarly)
+        assertEquals(true, e.clearOverride)
+    }
+
+    @Test
+    fun resolveEffective_override_behind_clears() {
+        val today = LocalDate(2026, 5, 20)
+        val override = Cutoff(2026, 4, Payday.THIRTIETH) // stale/behind
+        val e = resolveEffectiveCutoff(today, override)
+        assertEquals(currentCutoff(today), e.cutoff)
+        assertEquals(true, e.clearOverride)
+    }
+
+    @Test
     fun cutoff_15_covers_15_to_29_of_same_month() {
         val c = Cutoff(year = 2026, month = 5, payday = Payday.FIFTEENTH)
         assertEquals(LocalDate(2026, 5, 15), c.windowStart)
