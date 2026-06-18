@@ -1,5 +1,6 @@
 package com.snowball.data
 
+import com.snowball.data.backup.BackupService
 import com.snowball.data.repo.CategoryRepository
 import com.snowball.data.repo.DebtRepository
 import com.snowball.data.repo.PaymentRepository
@@ -11,4 +12,5 @@ class Repos(db: SnowballDb) {
     val debts: DebtRepository = DebtRepository(db)
     val payments: PaymentRepository = PaymentRepository(db)
     val settings: SettingsRepository = SettingsRepository(db)
+    val backup: BackupService = BackupService(db)
 }

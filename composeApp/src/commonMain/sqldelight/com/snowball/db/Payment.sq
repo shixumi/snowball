@@ -9,6 +9,9 @@ CREATE TABLE Payment (
 CREATE INDEX idx_payment_debt ON Payment(debtId);
 CREATE INDEX idx_payment_paiddate ON Payment(paidDate);
 
+selectAll:
+SELECT * FROM Payment;
+
 selectAllForDebt:
 SELECT * FROM Payment WHERE debtId = ? ORDER BY paidDate DESC, id DESC;
 
@@ -24,5 +27,11 @@ SELECT * FROM Payment WHERE debtId = ? AND paidDate >= :from AND paidDate <= :to
 insert:
 INSERT INTO Payment(debtId, paidDate, amount, createdAt) VALUES (?, ?, ?, ?);
 
+insertWithId:
+INSERT INTO Payment(id, debtId, paidDate, amount, createdAt) VALUES (?, ?, ?, ?, ?);
+
 deleteById:
 DELETE FROM Payment WHERE id = ?;
+
+deleteAll:
+DELETE FROM Payment;

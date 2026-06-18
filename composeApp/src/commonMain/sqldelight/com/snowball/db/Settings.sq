@@ -33,6 +33,18 @@ UPDATE Settings SET firstLaunchSeen = 1 WHERE id = 1;
 setSwipeCoachmarkSeen:
 UPDATE Settings SET swipeCoachmarkSeen = 1 WHERE id = 1;
 
+replaceAll:
+UPDATE Settings SET
+    incomePerCutoff = :incomePerCutoff,
+    currency = :currency,
+    notificationsEnabled = :notificationsEnabled,
+    notificationHour = :notificationHour,
+    notificationMinute = :notificationMinute,
+    firstLaunchSeen = :firstLaunchSeen,
+    swipeCoachmarkSeen = :swipeCoachmarkSeen,
+    paidAheadKey = :paidAheadKey
+WHERE id = 1;
+
 setPaidAhead:
 UPDATE Settings SET paidAheadKey = :paidAheadKey WHERE id = 1;
 

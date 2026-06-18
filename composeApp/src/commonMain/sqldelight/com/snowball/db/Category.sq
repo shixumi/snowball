@@ -19,6 +19,12 @@ INSERT INTO Category(name, isSystem, behavior, iconKey, createdAt) VALUES (?, ?,
 insertOrIgnore:
 INSERT OR IGNORE INTO Category(name, isSystem, behavior, iconKey, createdAt) VALUES (?, ?, ?, ?, ?);
 
+insertWithId:
+INSERT INTO Category(id, name, isSystem, behavior, iconKey, createdAt) VALUES (?, ?, ?, ?, ?, ?);
+
+deleteAll:
+DELETE FROM Category;
+
 renameById:
 UPDATE Category SET name = :name WHERE id = :id AND isSystem = 0;
 

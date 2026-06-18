@@ -134,6 +134,7 @@ fun App(repos: Repos, notificationScheduler: NotificationScheduler) {
                                     SettingsScreen(
                                         vm = settingsVm,
                                         onManageCategories = { route = Route.CategoryManagement },
+                                        onDataReplaced = { tab = Tab.Home; refreshKey++ },
                                     )
                                 }
                             }

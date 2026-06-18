@@ -32,6 +32,10 @@ insert:
 INSERT INTO Debt(name, categoryId, monthlyAmount, totalPayments, dueDay, useLastDayOfMonth, startDate, firstPaymentDate, isArchived, notes, createdAt)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?);
 
+insertWithId:
+INSERT INTO Debt(id, name, categoryId, monthlyAmount, totalPayments, dueDay, useLastDayOfMonth, startDate, firstPaymentDate, isArchived, notes, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 update:
 UPDATE Debt SET
     name = :name,
@@ -50,3 +54,6 @@ UPDATE Debt SET isArchived = :isArchived WHERE id = :id;
 
 deleteById:
 DELETE FROM Debt WHERE id = ?;
+
+deleteAll:
+DELETE FROM Debt;

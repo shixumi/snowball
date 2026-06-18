@@ -1,8 +1,10 @@
 package com.snowball.ui.settings
 
 import com.snowball.data.Repos
+import com.snowball.data.backup.ImportResult
 import com.snowball.data.model.Settings
 import com.snowball.platform.NotificationScheduler
+import kotlinx.datetime.Clock
 
 class SettingsViewModel(private val repos: Repos, private val scheduler: NotificationScheduler) {
 
@@ -35,5 +37,20 @@ class SettingsViewModel(private val repos: Repos, private val scheduler: Notific
         if (notificationsEnabled) {
             scheduler.schedule(true, hour, minute)
         }
+    }
+
+    fun exportJson(): String =
+        repos.backup.export(exportedAt = Clock.System.now().toEpochMilliseconds())
+
+    /** Replaces all data with the backup. On success the caller must refresh the app. */
+    fun import(json: String): ImportResult {
+        val result = repos.backup.import(json)
+        if (result is ImportResult.Success) {
+            refresh()
+            // Imported settings decide notifications; re-sync the OS schedule.
+            scheduler.cancel()
+            if (notificationsEnabled) scheduler.schedule(true, notificationHour, notificationMinute)
+        }
+        return result
     }
 }
