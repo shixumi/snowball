@@ -34,5 +34,8 @@ targets:
       - name: "Build Compose (Kotlin) framework"
         basedOnDependencyAnalysis: false
         script: |
+          # Xcode build scripts don't inherit the shell's JAVA_HOME, so pin a JDK
+          # Gradle/AGP supports (21, then 17) instead of falling back to a too-new system JDK.
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || echo "$JAVA_HOME")"
           cd "$SRCROOT/.."
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
