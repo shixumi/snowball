@@ -8,3 +8,7 @@ local.properties
 Thumbs.db
 xcuserdata/
 .kotlin/
+# iOS: the Xcode project is generated from iosApp/project.yml by xcodegen
+iosApp/*.xcodeproj/
+iosApp/DerivedData/
+*.xcuserstate
