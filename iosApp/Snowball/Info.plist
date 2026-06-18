@@ -16,6 +16,10 @@
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <!-- Compose Multiplatform requires this so it can render above 60fps on
+         ProMotion / high-refresh iPhones; without it Compose throws on startup. -->
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
     <key>CFBundleShortVersionString</key>
     <string>0.5.0</string>
     <key>CFBundleVersion</key>
