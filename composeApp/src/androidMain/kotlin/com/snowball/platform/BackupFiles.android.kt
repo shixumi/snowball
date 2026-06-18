@@ -21,7 +21,10 @@ actual fun rememberBackupExporter(): (String, String) -> Unit {
         val content = pending
         pending = null
         if (uri != null && content != null) {
-            context.contentResolver.openOutputStream(uri)?.use { it.write(content.encodeToByteArray()) }
+            // "wt" = write + TRUNCATE. The default "w" mode does NOT reliably truncate on
+            // SAF providers, so overwriting an existing (longer) file would leave stale
+            // trailing bytes and corrupt the JSON. Always truncate first.
+            context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(content.encodeToByteArray()) }
         }
     }
     return { fileName, content ->

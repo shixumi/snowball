@@ -17,7 +17,6 @@ object BackupCodec {
         prettyPrint = true
         ignoreUnknownKeys = true
         encodeDefaults = true
-        isLenient = true
     }
 
     fun encode(backup: BackupFile): String = json.encodeToString(BackupFile.serializer(), backup)
