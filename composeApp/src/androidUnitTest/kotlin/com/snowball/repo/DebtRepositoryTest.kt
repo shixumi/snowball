@@ -2,6 +2,7 @@ package com.snowball.repo
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.snowball.data.repo.DebtRepository
+import com.snowball.data.repo.PaymentRepository
 import com.snowball.db.SnowballDb
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -49,6 +50,22 @@ class DebtRepositoryTest {
         val id = repo.add("a", catId(db), 100.0, 1, 1, false, LocalDate(2026, 1, 1), LocalDate(2026, 2, 1), null)
         repo.setArchived(id, true)
         assertEquals(0, repo.allActive().size)
+    }
+
+    @Test
+    fun deleting_debt_also_removes_its_payments() {
+        val db = freshDb()
+        val repo = DebtRepository(db)
+        val payments = PaymentRepository(db)
+        val id = repo.add("a", catId(db), 100.0, 3, 1, false, LocalDate(2026, 1, 1), LocalDate(2026, 2, 1), null)
+        payments.markPaid(id, LocalDate(2026, 2, 1), 100.0)
+        payments.markPaid(id, LocalDate(2026, 3, 1), 100.0)
+        assertEquals(2, payments.countForDebt(id))
+
+        repo.delete(id)
+
+        assertEquals(0, payments.countForDebt(id))
+        assertEquals(0, db.paymentQueries.selectAll().executeAsList().size)
     }
 
     @Test

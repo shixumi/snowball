@@ -33,5 +33,8 @@ INSERT INTO Payment(id, debtId, paidDate, amount, createdAt) VALUES (?, ?, ?, ?,
 deleteById:
 DELETE FROM Payment WHERE id = ?;
 
+deleteForDebt:
+DELETE FROM Payment WHERE debtId = ?;
+
 deleteAll:
 DELETE FROM Payment;

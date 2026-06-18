@@ -103,36 +103,56 @@ class BackupServiceTest {
         assertEquals(before, target.debtQueries.selectAll().executeAsList())
     }
 
-    /** A backup that decodes fine but has a dangling foreign key must be rejected
-     *  (FK enforcement is off on our drivers) and must NOT wipe existing data. */
+    /** Orphaned payments (referencing a debt not in the file — e.g. a debt deleted
+     *  before delete-cascade existed) are dropped, and the import still succeeds. */
     @Test
-    fun import_of_referentially_invalid_backup_fails_and_leaves_data_untouched() {
+    fun import_drops_orphaned_payments_and_succeeds() {
         val target = freshDb()
-        seed(target)
-        val before = Triple(
-            target.categoryQueries.selectAll().executeAsList(),
-            target.debtQueries.selectAll().executeAsList(),
-            target.paymentQueries.selectAll().executeAsList(),
-        )
-
-        // Valid envelope, but the payment points at a debt that isn't in the file.
-        val danglingPayment = BackupCodec.encode(
+        val withOrphan = BackupCodec.encode(
             BackupFile(
                 formatVersion = BackupCodec.CURRENT_FORMAT_VERSION,
                 dbVersion = SnowballDb.Schema.version,
                 exportedAt = 1,
                 categories = listOf(CategoryDto(1, "Credit Card", true, "SCHEDULED", "credit_card", 0)),
                 debts = listOf(DebtDto(5, "Phone", 1, 999.0, 6, 10, false, "2026-01-10", "2026-02-10", false, null, 1)),
-                payments = listOf(PaymentDto(80, 999, "2026-02-10", 999.0, 2)),
+                payments = listOf(
+                    PaymentDto(80, 5, "2026-02-10", 999.0, 2),    // valid → kept
+                    PaymentDto(81, 999, "2026-02-10", 999.0, 3),  // orphan → dropped
+                ),
                 settings = SettingsDto(0.0, "PHP", true, 9, 0, true, false, ""),
             )
         )
-        val result = BackupService(target).import(danglingPayment)
-        assertTrue(result is ImportResult.Failure, "expected failure, got $result")
+        val result = BackupService(target).import(withOrphan)
+        assertTrue(result is ImportResult.Success, "expected success, got $result")
+        result as ImportResult.Success
+        assertEquals(1, result.payments)
 
-        assertEquals(before.first, target.categoryQueries.selectAll().executeAsList())
-        assertEquals(before.second, target.debtQueries.selectAll().executeAsList())
-        assertEquals(before.third, target.paymentQueries.selectAll().executeAsList())
+        val payments = target.paymentQueries.selectAll().executeAsList()
+        assertEquals(1, payments.size)
+        assertEquals(5L, payments.first().debtId)
+    }
+
+    /** A debt referencing a missing category is malformed → reject, data untouched. */
+    @Test
+    fun import_of_debt_with_missing_category_fails_and_leaves_data_untouched() {
+        val target = freshDb()
+        seed(target)
+        val before = target.debtQueries.selectAll().executeAsList()
+
+        val badCategory = BackupCodec.encode(
+            BackupFile(
+                formatVersion = BackupCodec.CURRENT_FORMAT_VERSION,
+                dbVersion = SnowballDb.Schema.version,
+                exportedAt = 1,
+                categories = listOf(CategoryDto(1, "Credit Card", true, "SCHEDULED", "credit_card", 0)),
+                debts = listOf(DebtDto(5, "Phone", 999, 999.0, 6, 10, false, "2026-01-10", "2026-02-10", false, null, 1)),
+                payments = emptyList(),
+                settings = SettingsDto(0.0, "PHP", true, 9, 0, true, false, ""),
+            )
+        )
+        val result = BackupService(target).import(badCategory)
+        assertTrue(result is ImportResult.Failure, "expected failure, got $result")
+        assertEquals(before, target.debtQueries.selectAll().executeAsList())
     }
 
     @Test

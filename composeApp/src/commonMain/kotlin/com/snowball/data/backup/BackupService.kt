@@ -45,15 +45,20 @@ class BackupService(private val db: SnowballDb) {
                 createdAt = row.createdAt,
             )
         }
-        val payments = db.paymentQueries.selectAll().executeAsList().map { row ->
-            PaymentDto(
-                id = row.id,
-                debtId = row.debtId,
-                paidDate = row.paidDate,
-                amount = row.amount,
-                createdAt = row.createdAt,
-            )
-        }
+        // Skip any orphaned payments (debt deleted before delete-cascade existed) so the
+        // exported file is referentially clean.
+        val debtIdSet = debts.mapTo(HashSet()) { it.id }
+        val payments = db.paymentQueries.selectAll().executeAsList()
+            .filter { it.debtId in debtIdSet }
+            .map { row ->
+                PaymentDto(
+                    id = row.id,
+                    debtId = row.debtId,
+                    paidDate = row.paidDate,
+                    amount = row.amount,
+                    createdAt = row.createdAt,
+                )
+            }
         val s = db.settingsQueries.select().executeAsOne()
         val settings = SettingsDto(
             incomePerCutoff = s.incomePerCutoff,
@@ -89,17 +94,17 @@ class BackupService(private val db: SnowballDb) {
             return ImportResult.Failure("This backup was made by an incompatible version of Snowball.")
         }
 
-        // Referential integrity: SQLite FK enforcement is off on our drivers, so a
-        // dangling reference would otherwise be inserted as a silent orphan and the
-        // import would falsely report success. Reject such backups up front instead.
+        // Referential integrity (SQLite FK enforcement is off on our drivers, so a
+        // dangling reference would otherwise be inserted as a silent orphan):
+        //  - A debt pointing at a missing category is malformed and can't be shown → reject.
+        //  - An orphaned payment (its debt was deleted before delete-cascade existed) just
+        //    references a debt that's gone → drop it; it's unusable junk, not a reason to fail.
         val categoryIds = backup.categories.mapTo(HashSet()) { it.id }
         if (backup.debts.any { it.categoryId !in categoryIds }) {
             return ImportResult.Failure("This backup is damaged: a debt refers to a category that isn't in the file.")
         }
         val debtIds = backup.debts.mapTo(HashSet()) { it.id }
-        if (backup.payments.any { it.debtId !in debtIds }) {
-            return ImportResult.Failure("This backup is damaged: a payment refers to a debt that isn't in the file.")
-        }
+        val payments = backup.payments.filter { it.debtId in debtIds }
 
         return try {
             db.transaction {
@@ -135,7 +140,7 @@ class BackupService(private val db: SnowballDb) {
                         createdAt = d.createdAt,
                     )
                 }
-                backup.payments.forEach { p ->
+                payments.forEach { p ->
                     db.paymentQueries.insertWithId(
                         id = p.id,
                         debtId = p.debtId,
@@ -160,7 +165,7 @@ class BackupService(private val db: SnowballDb) {
                     )
                 }
             }
-            ImportResult.Success(backup.categories.size, backup.debts.size, backup.payments.size)
+            ImportResult.Success(backup.categories.size, backup.debts.size, payments.size)
         } catch (e: Exception) {
             ImportResult.Failure("Import failed and your data was left unchanged. (${e.message})")
         }

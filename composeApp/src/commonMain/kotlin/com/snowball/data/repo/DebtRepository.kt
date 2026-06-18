@@ -64,7 +64,12 @@ class DebtRepository(private val db: SnowballDb) {
     }
 
     fun delete(id: Long) {
-        db.debtQueries.deleteById(id)
+        // FK cascade isn't enforced by the drivers, so remove the debt's payments
+        // explicitly — otherwise they'd linger as orphans after the debt is gone.
+        db.transaction {
+            db.paymentQueries.deleteForDebt(id)
+            db.debtQueries.deleteById(id)
+        }
     }
 
     fun byId(id: Long): Debt? =
