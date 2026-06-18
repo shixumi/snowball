@@ -30,6 +30,10 @@ targets:
           - "$(inherited)"
           - "-framework"
           - "ComposeApp"
+          # SQLDelight's NativeSqliteDriver links against the system SQLite. Because
+          # ComposeApp is a STATIC framework, those sqlite3_* symbols stay unresolved
+          # until the app links, so the app must pull in libsqlite3 itself.
+          - "-lsqlite3"
     preBuildScripts:
       - name: "Build Compose (Kotlin) framework"
         basedOnDependencyAnalysis: false
