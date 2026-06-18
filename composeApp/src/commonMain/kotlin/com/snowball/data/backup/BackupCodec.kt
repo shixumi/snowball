@@ -17,6 +17,7 @@ object BackupCodec {
         prettyPrint = true
         ignoreUnknownKeys = true
         encodeDefaults = true
+        isLenient = true
     }
 
     fun encode(backup: BackupFile): String = json.encodeToString(BackupFile.serializer(), backup)
@@ -31,9 +32,9 @@ object BackupCodec {
         val parsed = try {
             json.decodeFromString(BackupFile.serializer(), cleaned)
         } catch (e: SerializationException) {
-            throw BackupFormatException(notValidMessage(cleaned))
+            throw BackupFormatException(notValidMessage(cleaned, e))
         } catch (e: IllegalArgumentException) {
-            throw BackupFormatException(notValidMessage(cleaned))
+            throw BackupFormatException(notValidMessage(cleaned, e))
         }
         if (parsed.formatVersion != CURRENT_FORMAT_VERSION) {
             throw BackupFormatException("This backup was made by an incompatible version of Snowball.")
@@ -41,10 +42,9 @@ object BackupCodec {
         return parsed
     }
 
-    /** Diagnostic message: reveals whether the input was empty / what it started with. */
-    private fun notValidMessage(text: String): String {
+    /** Diagnostic message: reveals whether the input was empty and the parser's complaint. */
+    private fun notValidMessage(text: String, e: Exception): String {
         if (text.isEmpty()) return "The file was empty or couldn't be read."
-        val head = text.take(50).replace("\n", " ").replace("\r", " ")
-        return "Not a valid Snowball export. Read ${text.length} chars starting: \"$head…\""
+        return "Couldn't parse backup (${text.length} chars): ${e.message}"
     }
 }
