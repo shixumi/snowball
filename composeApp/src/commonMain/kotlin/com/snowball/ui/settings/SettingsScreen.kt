@@ -326,7 +326,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(40.dp))
         Text(
-            "Snowball v0.6.0",
+            "Snowball v0.6.1",
             style = MaterialTheme.typography.labelSmall,
             color = SnowColors.FrostMute,
         )
