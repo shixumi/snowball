@@ -88,6 +88,19 @@ class BackupService(private val db: SnowballDb) {
         if (backup.dbVersion != SnowballDb.Schema.version) {
             return ImportResult.Failure("This backup was made by an incompatible version of Snowball.")
         }
+
+        // Referential integrity: SQLite FK enforcement is off on our drivers, so a
+        // dangling reference would otherwise be inserted as a silent orphan and the
+        // import would falsely report success. Reject such backups up front instead.
+        val categoryIds = backup.categories.mapTo(HashSet()) { it.id }
+        if (backup.debts.any { it.categoryId !in categoryIds }) {
+            return ImportResult.Failure("This backup is damaged: a debt refers to a category that isn't in the file.")
+        }
+        val debtIds = backup.debts.mapTo(HashSet()) { it.id }
+        if (backup.payments.any { it.debtId !in debtIds }) {
+            return ImportResult.Failure("This backup is damaged: a payment refers to a debt that isn't in the file.")
+        }
+
         return try {
             db.transaction {
                 // Clear children before parents so foreign keys hold either way.

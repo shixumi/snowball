@@ -1,8 +1,14 @@
 package com.snowball.backup
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.snowball.data.backup.BackupCodec
+import com.snowball.data.backup.BackupFile
 import com.snowball.data.backup.BackupService
+import com.snowball.data.backup.CategoryDto
+import com.snowball.data.backup.DebtDto
 import com.snowball.data.backup.ImportResult
+import com.snowball.data.backup.PaymentDto
+import com.snowball.data.backup.SettingsDto
 import com.snowball.db.SnowballDb
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -95,5 +101,81 @@ class BackupServiceTest {
         val result = BackupService(target).import("this is not a backup")
         assertTrue(result is ImportResult.Failure)
         assertEquals(before, target.debtQueries.selectAll().executeAsList())
+    }
+
+    /** A backup that decodes fine but has a dangling foreign key must be rejected
+     *  (FK enforcement is off on our drivers) and must NOT wipe existing data. */
+    @Test
+    fun import_of_referentially_invalid_backup_fails_and_leaves_data_untouched() {
+        val target = freshDb()
+        seed(target)
+        val before = Triple(
+            target.categoryQueries.selectAll().executeAsList(),
+            target.debtQueries.selectAll().executeAsList(),
+            target.paymentQueries.selectAll().executeAsList(),
+        )
+
+        // Valid envelope, but the payment points at a debt that isn't in the file.
+        val danglingPayment = BackupCodec.encode(
+            BackupFile(
+                formatVersion = BackupCodec.CURRENT_FORMAT_VERSION,
+                dbVersion = SnowballDb.Schema.version,
+                exportedAt = 1,
+                categories = listOf(CategoryDto(1, "Credit Card", true, "SCHEDULED", "credit_card", 0)),
+                debts = listOf(DebtDto(5, "Phone", 1, 999.0, 6, 10, false, "2026-01-10", "2026-02-10", false, null, 1)),
+                payments = listOf(PaymentDto(80, 999, "2026-02-10", 999.0, 2)),
+                settings = SettingsDto(0.0, "PHP", true, 9, 0, true, false, ""),
+            )
+        )
+        val result = BackupService(target).import(danglingPayment)
+        assertTrue(result is ImportResult.Failure, "expected failure, got $result")
+
+        assertEquals(before.first, target.categoryQueries.selectAll().executeAsList())
+        assertEquals(before.second, target.debtQueries.selectAll().executeAsList())
+        assertEquals(before.third, target.paymentQueries.selectAll().executeAsList())
+    }
+
+    @Test
+    fun import_rejects_dbVersion_mismatch_and_keeps_data() {
+        val target = freshDb()
+        seed(target)
+        val before = target.debtQueries.selectAll().executeAsList()
+
+        val wrongVersion = BackupCodec.encode(
+            BackupFile(
+                formatVersion = BackupCodec.CURRENT_FORMAT_VERSION,
+                dbVersion = SnowballDb.Schema.version + 1,
+                exportedAt = 1,
+                categories = emptyList(),
+                debts = emptyList(),
+                payments = emptyList(),
+                settings = SettingsDto(0.0, "PHP", true, 9, 0, true, false, ""),
+            )
+        )
+        val result = BackupService(target).import(wrongVersion)
+        assertTrue(result is ImportResult.Failure)
+        assertEquals(before, target.debtQueries.selectAll().executeAsList())
+    }
+
+    @Test
+    fun import_of_empty_backup_clears_everything() {
+        val target = freshDb()
+        seed(target)
+        val empty = BackupCodec.encode(
+            BackupFile(
+                formatVersion = BackupCodec.CURRENT_FORMAT_VERSION,
+                dbVersion = SnowballDb.Schema.version,
+                exportedAt = 1,
+                categories = emptyList(),
+                debts = emptyList(),
+                payments = emptyList(),
+                settings = SettingsDto(0.0, "PHP", true, 9, 0, true, false, ""),
+            )
+        )
+        val result = BackupService(target).import(empty)
+        assertTrue(result is ImportResult.Success)
+        assertTrue(target.categoryQueries.selectAll().executeAsList().isEmpty())
+        assertTrue(target.debtQueries.selectAll().executeAsList().isEmpty())
+        assertTrue(target.paymentQueries.selectAll().executeAsList().isEmpty())
     }
 }

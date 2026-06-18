@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,7 +56,9 @@ import com.snowball.ui.components.ScreenHeader
 import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.toFormFieldString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private fun Double.toFormattedPeso(): String {
     if (this == 0.0) return ""
@@ -309,7 +312,7 @@ fun SettingsScreen(
             color = SnowColors.FrostMute,
         )
 
-        if (showExport) ExportDialog(json = remember { vm.exportJson() }, onDismiss = { showExport = false })
+        if (showExport) ExportDialog(vm = vm, onDismiss = { showExport = false })
         if (showImport) {
             ImportDialog(
                 onDismiss = { showImport = false },
@@ -332,10 +335,14 @@ fun SettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExportDialog(json: String, onDismiss: () -> Unit) {
+private fun ExportDialog(vm: SettingsViewModel, onDismiss: () -> Unit) {
     val clipboard = LocalClipboardManager.current
     val haptics = rememberHaptics()
     var copied by remember { mutableStateOf(false) }
+    // Serialize the database off the composition (main) thread.
+    val json by produceState<String?>(initialValue = null) {
+        value = withContext(Dispatchers.Default) { vm.exportJson() }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Export data", color = SnowColors.Frost) },
@@ -350,7 +357,7 @@ private fun ExportDialog(json: String, onDismiss: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
                 SelectionContainer {
                     Text(
-                        json,
+                        json ?: "Preparing…",
                         style = MaterialTheme.typography.bodySmall,
                         color = SnowColors.Frost,
                         modifier = Modifier
@@ -364,11 +371,16 @@ private fun ExportDialog(json: String, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                clipboard.setText(AnnotatedString(json))
-                copied = true
-                haptics.tick()
-            }) { Text(if (copied) "Copied ✓" else "Copy") }
+            TextButton(
+                enabled = json != null,
+                onClick = {
+                    json?.let {
+                        clipboard.setText(AnnotatedString(it))
+                        copied = true
+                        haptics.tick()
+                    }
+                },
+            ) { Text(if (copied) "Copied ✓" else "Copy") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Done") } },
         containerColor = SnowColors.CardElev,
@@ -445,7 +457,13 @@ private fun ImportDialog(
                     ),
                 )
                 TextButton(onClick = {
-                    clipboard.getText()?.text?.let { text = it; error = null }
+                    val pasted = clipboard.getText()?.text
+                    if (pasted.isNullOrEmpty()) {
+                        error = "Clipboard is empty — copy a backup first."
+                    } else {
+                        text = pasted
+                        error = null
+                    }
                 }) { Text("Paste from clipboard") }
                 error?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = SnowColors.Ember)
