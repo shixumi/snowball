@@ -35,7 +35,9 @@ targets:
         basedOnDependencyAnalysis: false
         script: |
           # Xcode build scripts don't inherit the shell's JAVA_HOME, so pin a JDK
-          # Gradle/AGP supports (21, then 17) instead of falling back to a too-new system JDK.
-          export JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || echo "$JAVA_HOME")"
+          # Gradle/AGP supports. NOTE: `java_home -v 21` returns the NEAREST JDK >= 21
+          # with exit 0 (so on a Mac with only 25 installed it hands back 25, which AGP
+          # rejects). JDK 17 is installed and supported, so request it directly.
+          export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
           cd "$SRCROOT/.."
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode

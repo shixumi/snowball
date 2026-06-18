@@ -8,7 +8,7 @@ Everything Kotlin/Gradle/Swift is already written and pushed. These are the step
    ```
    xcode-select --install
    ```
-2. **A JDK 21** (the project targets Java 21). Easiest: install Temurin 21 (`brew install --cask temurin@21`) or point `JAVA_HOME` at Android Studio's bundled JBR if you have it. Verify: `java -version` → 21.
+2. **A JDK 17** (Gradle/AGP build the Kotlin framework with it). The build-phase script calls `/usr/libexec/java_home -v 17` directly — so as long as a JDK 17 is installed it'll be picked up, regardless of your shell's `JAVA_HOME` or whatever newer JDK is the system default. Verify one is present: `/usr/libexec/java_home -v 17` should print a path. If not, install one (`brew install --cask temurin@17`).
 3. **Homebrew** (if missing) + **xcodegen** (generates the Xcode project from the checked-in `project.yml`):
    ```
    brew install xcodegen
@@ -38,7 +38,7 @@ In Xcode:
 
 ## If it errors — likely spots (send the message back to Windows)
 
-- **Gradle/JDK:** "invalid source release" / toolchain → `JAVA_HOME` isn't a JDK 21.
+- **Gradle/JDK:** "invalid source release" / a bare version number like `25.0.2` as the failure → no JDK 17 installed, so `java_home -v 17` fell through. Install Temurin 17.
 - **Script sandbox:** "Sandbox: bash deny..." → `ENABLE_USER_SCRIPT_SANDBOXING=NO` is already set in `project.yml`; make sure you re-ran `xcodegen generate` after any edit.
 - **Framework not found / `import ComposeApp` fails:** the pre-build "Build Compose (Kotlin) framework" script didn't run or `FRAMEWORK_SEARCH_PATHS` is off — grab the Xcode build log for that phase.
 - **Kotlin/Native compile errors in `iosMain`:** these only surface here (couldn't be compiled on Windows). Most likely candidates: the `UIImpactFeedbackGenerator`/`UIImpactFeedbackStyle` API names in `Haptics.ios.kt`, or the `ComposeUIViewController` import. Paste the exact error.
