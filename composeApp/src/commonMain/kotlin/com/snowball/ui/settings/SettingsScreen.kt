@@ -222,7 +222,7 @@ fun SettingsScreen(vm: SettingsViewModel, onManageCategories: () -> Unit = {}) {
                 color = if (notifEnabled) SnowColors.Frost else SnowColors.FrostDim,
             )
             Text(
-                "%02d:%02d".format(notifHour, notifMinute),
+                "${notifHour.toString().padStart(2, '0')}:${notifMinute.toString().padStart(2, '0')}",
                 color = if (notifEnabled) SnowColors.Frost else SnowColors.FrostDim,
             )
         }
