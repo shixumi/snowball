@@ -12,13 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -37,19 +33,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.snowball.data.backup.ImportResult
+import com.snowball.platform.rememberBackupExporter
+import com.snowball.platform.rememberBackupImporter
 import com.snowball.platform.rememberHaptics
 import com.snowball.platform.rememberRequestNotificationPermission
 import com.snowball.ui.components.ScreenHeader
@@ -58,7 +54,11 @@ import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.toFormFieldString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 private fun Double.toFormattedPeso(): String {
     if (this == 0.0) return ""
@@ -280,14 +280,25 @@ fun SettingsScreen(
         )
         Spacer(Modifier.height(8.dp))
 
-        var showExport by remember { mutableStateOf(false) }
-        var showImport by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        val exporter = rememberBackupExporter()
+        var pendingImport by remember { mutableStateOf<String?>(null) }
+        var importError by remember { mutableStateOf<String?>(null) }
+        val importer = rememberBackupImporter { picked ->
+            // null = user cancelled the file picker; otherwise confirm before replacing.
+            if (picked != null) pendingImport = picked
+        }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { showExport = true }
+                .clickable {
+                    scope.launch {
+                        val json = withContext(Dispatchers.Default) { vm.exportJson() }
+                        exporter(defaultBackupFileName(), json)
+                    }
+                }
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -298,7 +309,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { showImport = true }
+                .clickable { importError = null; importer() }
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -307,176 +318,63 @@ fun SettingsScreen(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            "Move your data to another device. Importing replaces everything currently in the app.",
+            "Save a backup file, or open one to restore. Importing replaces everything currently in the app.",
             style = MaterialTheme.typography.bodySmall,
             color = SnowColors.FrostMute,
         )
 
-        if (showExport) ExportDialog(vm = vm, onDismiss = { showExport = false })
-        if (showImport) {
-            ImportDialog(
-                onDismiss = { showImport = false },
-                onImport = { json -> vm.import(json) },
-                onReplaced = {
-                    showImport = false
-                    onDataReplaced()
+        pendingImport?.let { json ->
+            AlertDialog(
+                onDismissRequest = { pendingImport = null },
+                title = { Text("Replace all data?", color = SnowColors.Frost) },
+                text = {
+                    Text(
+                        "This erases your current debts, payments and settings, then restores the backup. This can't be undone.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = SnowColors.FrostMute,
+                    )
                 },
+                confirmButton = {
+                    TextButton(onClick = {
+                        when (val result = vm.import(json)) {
+                            is ImportResult.Success -> {
+                                haptics.thump()
+                                pendingImport = null
+                                onDataReplaced()
+                            }
+                            is ImportResult.Failure -> {
+                                importError = result.message
+                                pendingImport = null
+                            }
+                        }
+                    }) { Text("Replace my data", color = SnowColors.Ember) }
+                },
+                dismissButton = { TextButton(onClick = { pendingImport = null }) { Text("Cancel") } },
+                containerColor = SnowColors.CardElev,
+            )
+        }
+
+        importError?.let { msg ->
+            AlertDialog(
+                onDismissRequest = { importError = null },
+                title = { Text("Import failed", color = SnowColors.Frost) },
+                text = { Text(msg, style = MaterialTheme.typography.bodyMedium, color = SnowColors.FrostMute) },
+                confirmButton = { TextButton(onClick = { importError = null }) { Text("OK") } },
+                containerColor = SnowColors.CardElev,
             )
         }
 
         Spacer(Modifier.height(40.dp))
         Text(
-            "Snowball v0.6.1",
+            "Snowball v0.7.0",
             style = MaterialTheme.typography.labelSmall,
             color = SnowColors.FrostMute,
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExportDialog(vm: SettingsViewModel, onDismiss: () -> Unit) {
-    val clipboard = LocalClipboardManager.current
-    val haptics = rememberHaptics()
-    var copied by remember { mutableStateOf(false) }
-    // Serialize the database off the composition (main) thread.
-    val json by produceState<String?>(initialValue = null) {
-        value = withContext(Dispatchers.Default) { vm.exportJson() }
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Export data", color = SnowColors.Frost) },
-        text = {
-            Column {
-                Text(
-                    "Copy this and save it somewhere (a note, email, or message to yourself). " +
-                        "On the other device, paste it into Import data.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SnowColors.FrostMute,
-                )
-                Spacer(Modifier.height(12.dp))
-                SelectionContainer {
-                    Text(
-                        json ?: "Preparing…",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SnowColors.Frost,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 220.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .verticalScroll(rememberScrollState())
-                            .padding(8.dp),
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = json != null,
-                onClick = {
-                    json?.let {
-                        clipboard.setText(AnnotatedString(it))
-                        copied = true
-                        haptics.tick()
-                    }
-                },
-            ) { Text(if (copied) "Copied ✓" else "Copy") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Done") } },
-        containerColor = SnowColors.CardElev,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ImportDialog(
-    onDismiss: () -> Unit,
-    onImport: (String) -> ImportResult,
-    onReplaced: () -> Unit,
-) {
-    val clipboard = LocalClipboardManager.current
-    val haptics = rememberHaptics()
-    var text by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-    var confirming by remember { mutableStateOf(false) }
-
-    if (confirming) {
-        AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text("Replace all data?", color = SnowColors.Frost) },
-            text = {
-                Text(
-                    "This erases your current debts, payments and settings, then restores the backup. This can't be undone.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SnowColors.FrostMute,
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    when (val result = onImport(text)) {
-                        is ImportResult.Success -> {
-                            haptics.thump()
-                            confirming = false
-                            onReplaced()
-                        }
-                        is ImportResult.Failure -> {
-                            error = result.message
-                            confirming = false
-                        }
-                    }
-                }) { Text("Replace my data", color = SnowColors.Ember) }
-            },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
-            containerColor = SnowColors.CardElev,
-        )
-        return
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Import data", color = SnowColors.Frost) },
-        text = {
-            Column {
-                Text(
-                    "Paste a Snowball backup below.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SnowColors.FrostMute,
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it; error = null },
-                    placeholder = { Text("{ \"formatVersion\": 1, … }", color = SnowColors.FrostDim) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 220.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = SnowColors.Frost,
-                        unfocusedTextColor = SnowColors.Frost,
-                        focusedBorderColor = SnowColors.Ice,
-                        unfocusedBorderColor = SnowColors.LineStrong,
-                        cursorColor = SnowColors.Ice,
-                    ),
-                )
-                TextButton(onClick = {
-                    val pasted = clipboard.getText()?.text
-                    if (pasted.isNullOrEmpty()) {
-                        error = "Clipboard is empty — copy a backup first."
-                    } else {
-                        text = pasted
-                        error = null
-                    }
-                }) { Text("Paste from clipboard") }
-                error?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = SnowColors.Ember)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = text.isNotBlank(),
-                onClick = { confirming = true },
-            ) { Text("Replace my data", color = if (text.isNotBlank()) SnowColors.Ember else SnowColors.FrostDim) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        containerColor = SnowColors.CardElev,
-    )
+/** e.g. "snowball-backup-2026-06-19.json" (LocalDate renders as ISO yyyy-MM-dd). */
+private fun defaultBackupFileName(): String {
+    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return "snowball-backup-$today.json"
 }

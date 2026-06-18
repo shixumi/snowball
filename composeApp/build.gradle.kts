@@ -71,8 +71,8 @@ android {
         applicationId = "com.snowball"
         minSdk = libs.versions.android.min.sdk.get().toInt()
         targetSdk = libs.versions.android.target.sdk.get().toInt()
-        versionCode = 7
-        versionName = "0.6.1"
+        versionCode = 8
+        versionName = "0.7.0"
     }
 
     signingConfigs {
