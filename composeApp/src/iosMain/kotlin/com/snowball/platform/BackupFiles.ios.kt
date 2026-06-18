@@ -51,7 +51,18 @@ private class BackupPickerDelegate(
         didPickDocumentsAtURLs: List<*>,
     ) {
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL
-        val text = url?.let { NSString.stringWithContentsOfURL(it, NSUTF8StringEncoding, null) as String? }
+        if (url == null) {
+            onResult(null)
+            return
+        }
+        // Picked files are security-scoped; must open access before reading (harmless
+        // when the picker already handed back a sandbox copy).
+        val accessed = url.startAccessingSecurityScopedResource()
+        val text = try {
+            NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) as String?
+        } finally {
+            if (accessed) url.stopAccessingSecurityScopedResource()
+        }
         onResult(text)
     }
 
