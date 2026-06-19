@@ -21,6 +21,9 @@ targets:
         PRODUCT_NAME: Snowball
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: Snowball/Info.plist
+        # App icon comes from Snowball/Assets.xcassets/AppIcon.appiconset (auto-included
+        # because Assets.xcassets lives under the Snowball sources path).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # The Kotlin framework is a static framework named ComposeApp, produced by
         # the Gradle task below into composeApp/build/xcode-frameworks/<config>/<sdk>.
         FRAMEWORK_SEARCH_PATHS:
