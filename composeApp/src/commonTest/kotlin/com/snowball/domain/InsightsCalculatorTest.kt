@@ -227,11 +227,41 @@ class InsightsCalculatorTest {
             count = 12,
         )
         assertEquals(12, f.size)
-        // The early rows should show the 1500 monthly being billed.
+        // Cycle 1 (due Jan 10) falls in the CURRENT cutoff, which Insights doesn't display
+        // (Home owns it) — it's advanced but not shown. So 5 of the 6 cycles appear in the
+        // visible forecast.
         val totalBilled = f.sumOf { it.dueTotal }
-        assertEquals(6 * 1500.0, totalBilled)
+        assertEquals(5 * 1500.0, totalBilled)
         // The last rows should be All Clear.
         assertTrue(f.last().isAllClear)
+    }
+
+    @Test
+    fun forecast_excludes_debt_whose_final_payment_falls_in_a_skipped_near_cutoff() {
+        // Regression: a 2-payment debt, cycle 1 already paid (May 30), cycle 2 due Jun 30.
+        // On Jun 25 the current cutoff is Jun-15th and the next is Jun-30th (windows the
+        // Insights forecast skips). Cycle 2 must be advanced+rolled off in that skipped
+        // Jun-30th cutoff, NOT spilled into a later visible cutoff (e.g. Jul 30).
+        val d = debt(
+            totalPayments = 2,
+            dueDay = 30,
+            startDate = LocalDate(2026, 5, 30),
+            firstPaymentDate = LocalDate(2026, 5, 30),
+        )
+        val cycle1 = payment(1L, d.id, amount = 1500.0, date = LocalDate(2026, 5, 30))
+        val f = InsightsCalculator.forecastCutoffs(
+            today = LocalDate(2026, 6, 25),
+            activeScheduledDebts = listOf(d),
+            paymentsByDebt = mapOf(d.id to listOf(cycle1)),
+            incomePerCutoff = 25000.0,
+            count = 6,
+        )
+        // The debt never appears in any displayed cutoff's breakdown.
+        assertTrue(
+            f.all { fc -> fc.rows.none { it.debt.id == d.id } },
+            "Finished-soon debt leaked into a visible cutoff: ${f.filter { fc -> fc.rows.any { it.debt.id == d.id } }.map { it.cutoff }}",
+        )
+        assertTrue(f.all { it.isAllClear })
     }
 
     @Test

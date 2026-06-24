@@ -89,34 +89,49 @@ object InsightsCalculator {
         val results = mutableListOf<CutoffForecast>()
         val virtual: MutableMap<Long, MutableList<Payment>> =
             paymentsByDebt.mapValues { it.value.toMutableList() }.toMutableMap()
-        var c = nextCutoff(today).next()
 
-        repeat(count) {
+        // Insights shows cutoffs from two ahead (Home owns the current + next cutoff). But
+        // the schedule must still be advanced THROUGH those two skipped cutoffs — otherwise
+        // a debt whose final payment falls in one of them never rolls off and wrongly spills
+        // into a later, visible cutoff. So simulate from the current cutoff and only collect
+        // results once we reach displayStart.
+        val displayStart = nextCutoff(today).next()
+        var c = currentCutoff(today)
+
+        while (results.size < count) {
             val stillOwed = activeScheduledDebts.filter { d ->
                 (virtual[d.id]?.size ?: 0) < d.totalPayments
             }
             val rows = CutoffCalculator.computeDueRows(c, stillOwed, virtual)
-            val dueTotal = rows.sumOf { it.amount }
-            val leftOver = incomePerCutoff - dueTotal
-            results.add(
-                CutoffForecast(
-                    cutoff = c,
-                    dueTotal = dueTotal,
-                    leftOver = leftOver,
-                    isAllClear = rows.isEmpty(),
-                    rows = rows,
-                )
-            )
-            rows.forEach { row ->
-                val list = virtual.getOrPut(row.debt.id) { mutableListOf() }
-                list.add(
-                    Payment(
-                        id = -1L,
-                        debtId = row.debt.id,
-                        paidDate = row.effectiveDueDate,
-                        amount = row.amount,
+
+            if (c.payDate >= displayStart.payDate) {
+                val dueTotal = rows.sumOf { it.amount }
+                results.add(
+                    CutoffForecast(
+                        cutoff = c,
+                        dueTotal = dueTotal,
+                        leftOver = incomePerCutoff - dueTotal,
+                        isAllClear = rows.isEmpty(),
+                        rows = rows,
                     )
                 )
+            }
+
+            // Advance the schedule: assume each not-yet-paid due cycle is paid on time.
+            // The isPaidThisCycle guard matters for the skipped near cutoffs, where a real
+            // payment may already cover the cycle — don't add a duplicate virtual payment.
+            rows.forEach { row ->
+                if (!row.isPaidThisCycle) {
+                    virtual.getOrPut(row.debt.id) { mutableListOf() }
+                        .add(
+                            Payment(
+                                id = -1L,
+                                debtId = row.debt.id,
+                                paidDate = row.effectiveDueDate,
+                                amount = row.amount,
+                            )
+                        )
+                }
             }
             c = c.next()
         }
