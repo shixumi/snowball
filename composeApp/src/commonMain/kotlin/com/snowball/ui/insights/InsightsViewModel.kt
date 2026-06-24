@@ -24,6 +24,8 @@ data class InsightsState(
     val forecast: List<CutoffForecast>,
     val monthForecast: List<MonthForecast>,
     val payoffTimeline: List<PayoffRow>,
+    /** Scheduled categories by id, for resolving the icon of each forecast breakdown row. */
+    val categoriesById: Map<Long, Category>,
 )
 
 class InsightsViewModel(private val repos: Repos) {
@@ -53,6 +55,6 @@ class InsightsViewModel(private val repos: Repos) {
                 )
             }
             .sortedBy { it.endDate }
-        return InsightsState(snapshot, forecast, monthForecast, payoffTimeline)
+        return InsightsState(snapshot, forecast, monthForecast, payoffTimeline, catById)
     }
 }

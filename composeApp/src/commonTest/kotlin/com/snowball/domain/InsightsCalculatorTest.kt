@@ -257,4 +257,31 @@ class InsightsCalculatorTest {
             assertTrue(row.leftOver < 0, "Expected negative leftOver for billed row $row")
         }
     }
+
+    @Test
+    fun forecast_rows_carry_the_per_debt_breakdown() {
+        val d = debt(
+            firstPaymentDate = LocalDate(2026, 1, 10),
+            totalPayments = 6,
+            dueDay = 10,
+            monthlyAmount = 1500.0,
+        )
+        val f = InsightsCalculator.forecastCutoffs(
+            today = LocalDate(2026, 1, 1),
+            activeScheduledDebts = listOf(d),
+            paymentsByDebt = mapOf(d.id to emptyList()),
+            incomePerCutoff = 25000.0,
+            count = 12,
+        )
+        // A billed cutoff carries one breakdown row for the debt, at its monthly amount,
+        // and the rows sum to the cutoff's dueTotal.
+        val billed = f.first { it.dueTotal > 0.0 }
+        assertEquals(1, billed.rows.size)
+        assertEquals(d.id, billed.rows[0].debt.id)
+        assertEquals(1500.0, billed.rows[0].amount)
+        assertEquals(billed.dueTotal, billed.rows.sumOf { it.amount })
+        // An all-clear cutoff has no breakdown rows.
+        assertTrue(f.last().isAllClear)
+        assertTrue(f.last().rows.isEmpty())
+    }
 }

@@ -17,6 +17,8 @@ data class CutoffForecast(
     val dueTotal: Double,
     val leftOver: Double,
     val isAllClear: Boolean,
+    /** Per-debt breakdown of what's due this cutoff, sorted by due date. */
+    val rows: List<DueRow> = emptyList(),
 )
 
 data class MonthForecast(
@@ -102,6 +104,7 @@ object InsightsCalculator {
                     dueTotal = dueTotal,
                     leftOver = leftOver,
                     isAllClear = rows.isEmpty(),
+                    rows = rows,
                 )
             )
             rows.forEach { row ->

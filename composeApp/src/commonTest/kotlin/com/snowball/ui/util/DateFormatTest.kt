@@ -29,4 +29,23 @@ class DateFormatTest {
             formatMonthYear(LocalDate(2026, 5, 31)),
         )
     }
+
+    @Test
+    fun ordinalDayBasicSuffixes() {
+        assertEquals("1st", ordinalDay(LocalDate(2026, 5, 1)))
+        assertEquals("2nd", ordinalDay(LocalDate(2026, 5, 2)))
+        assertEquals("3rd", ordinalDay(LocalDate(2026, 5, 3)))
+        assertEquals("4th", ordinalDay(LocalDate(2026, 5, 4)))
+        assertEquals("21st", ordinalDay(LocalDate(2026, 5, 21)))
+        assertEquals("22nd", ordinalDay(LocalDate(2026, 5, 22)))
+        assertEquals("23rd", ordinalDay(LocalDate(2026, 5, 23)))
+        assertEquals("30th", ordinalDay(LocalDate(2026, 5, 30)))
+    }
+
+    @Test
+    fun ordinalDayTeensAreAlwaysTh() {
+        assertEquals("11th", ordinalDay(LocalDate(2026, 5, 11)))
+        assertEquals("12th", ordinalDay(LocalDate(2026, 5, 12)))
+        assertEquals("13th", ordinalDay(LocalDate(2026, 5, 13)))
+    }
 }

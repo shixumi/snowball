@@ -46,9 +46,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowball.data.model.Category
 import com.snowball.domain.CutoffForecast
+import com.snowball.domain.DueRow
 import com.snowball.domain.MonthForecast
 import com.snowball.domain.SnapshotStats
+import com.snowball.platform.rememberHaptics
 import com.snowball.ui.components.PesoText
 import com.snowball.ui.components.ScreenHeader
 import com.snowball.ui.components.SegmentedToggle
@@ -59,6 +62,7 @@ import com.snowball.ui.theme.SnowColors
 import com.snowball.ui.util.formatAmountWithSeparators
 import com.snowball.ui.util.formatLongDate
 import com.snowball.ui.util.formatMonthYear
+import com.snowball.ui.util.ordinalDay
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 
@@ -126,6 +130,7 @@ fun InsightsScreen(vm: InsightsViewModel) {
         }
         Spacer(Modifier.height(24.dp))
         var forecastView by remember { mutableStateOf(0) } // 0 = per cutoff, 1 = per month
+        var expandedCutoff by remember { mutableStateOf<Int?>(null) }
         Text(
             "UPCOMING",
             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 4.sp),
@@ -154,7 +159,7 @@ fun InsightsScreen(vm: InsightsViewModel) {
             SegmentedToggle(
                 options = listOf("Per cutoff", "Per month"),
                 selectedIndex = forecastView,
-                onSelect = { forecastView = it },
+                onSelect = { forecastView = it; expandedCutoff = null },
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(12.dp))
@@ -162,12 +167,21 @@ fun InsightsScreen(vm: InsightsViewModel) {
                 if (forecastView == 0) {
                     state.forecast.forEachIndexed { i, f ->
                         StaggeredItem(index = i + 1) {
-                            ForecastSummaryRow(
-                                label = cutoffRangeLabel(f.cutoff),
-                                dueTotal = f.dueTotal,
-                                leftOver = f.leftOver,
-                                isAllClear = f.isAllClear,
-                            )
+                            if (f.isAllClear || f.rows.isEmpty()) {
+                                ForecastSummaryRow(
+                                    label = cutoffRangeLabel(f.cutoff),
+                                    dueTotal = f.dueTotal,
+                                    leftOver = f.leftOver,
+                                    isAllClear = f.isAllClear,
+                                )
+                            } else {
+                                ExpandableCutoffRow(
+                                    forecast = f,
+                                    categoriesById = state.categoriesById,
+                                    expanded = expandedCutoff == i,
+                                    onToggle = { expandedCutoff = if (expandedCutoff == i) null else i },
+                                )
+                            }
                         }
                     }
                 } else {
@@ -369,5 +383,119 @@ private fun ForecastSummaryRow(
                 )
             }
         }
+    }
+}
+
+/** A per-cutoff forecast row that expands to reveal the per-debt breakdown of what's due. */
+@Composable
+private fun ExpandableCutoffRow(
+    forecast: CutoffForecast,
+    categoriesById: Map<Long, Category>,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+) {
+    val haptics = rememberHaptics()
+    val isShort = forecast.leftOver < 0
+    val borderColor = if (isShort) SnowColors.Ember.copy(alpha = 0.4f) else SnowColors.LineStrong
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(200),
+        label = "cutoffChevron",
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(SnowColors.NightElev)
+            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onToggle(); haptics.tick() },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                cutoffRangeLabel(forecast.cutoff),
+                style = MaterialTheme.typography.bodyLarge,
+                color = SnowColors.Frost,
+                modifier = Modifier.weight(1f),
+            )
+            Column(horizontalAlignment = Alignment.End) {
+                PesoText(
+                    amount = forecast.dueTotal,
+                    style = MaterialTheme.typography.headlineSmall,
+                    pesoColor = SnowColors.FrostDim,
+                    numberColor = SnowColors.Frost,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    if (isShort) "SHORT BY ₱${formatAmountWithSeparators(abs(forecast.leftOver))}"
+                    else "₱${formatAmountWithSeparators(forecast.leftOver)} left",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isShort) SnowColors.Ember else SnowColors.FrostMute,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = if (expanded) "Collapse breakdown" else "Expand breakdown",
+                tint = SnowColors.FrostDim,
+                modifier = Modifier.size(20.dp).rotate(chevronRotation),
+            )
+        }
+        AnimatedVisibility(visible = expanded) {
+            Column {
+                Spacer(Modifier.height(14.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(SnowColors.Line),
+                )
+                Spacer(Modifier.height(12.dp))
+                forecast.rows.forEachIndexed { idx, row ->
+                    BreakdownLine(row = row, category = categoriesById[row.debt.categoryId])
+                    if (idx < forecast.rows.lastIndex) Spacer(Modifier.height(12.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BreakdownLine(row: DueRow, category: Category?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (category != null) {
+            Icon(
+                imageVector = category.icon(),
+                contentDescription = null,
+                tint = SnowColors.FrostDim,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                row.debt.name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = SnowColors.Frost,
+            )
+            Text(
+                "due ${ordinalDay(row.effectiveDueDate)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = SnowColors.FrostDim,
+            )
+        }
+        Text(
+            "₱${formatAmountWithSeparators(row.amount)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = SnowColors.Frost,
+        )
     }
 }
