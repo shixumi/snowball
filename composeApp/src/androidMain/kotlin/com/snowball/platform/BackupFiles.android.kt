@@ -10,7 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
-actual fun rememberBackupExporter(): (String, String) -> Unit {
+actual fun rememberBackupExporter(): (fileName: String, content: String) -> Unit {
     val context = LocalContext.current
     // CreateDocument returns a destination Uri AFTER the user picks a name/location,
     // so we stash the content to write once that Uri comes back.

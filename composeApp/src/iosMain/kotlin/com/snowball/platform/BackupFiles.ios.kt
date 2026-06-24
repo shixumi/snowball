@@ -32,7 +32,7 @@ private fun topmostViewController(): UIViewController? {
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun rememberBackupExporter(): (String, String) -> Unit = { fileName, content ->
+actual fun rememberBackupExporter(): (fileName: String, content: String) -> Unit = { fileName, content ->
     // Write to a temp file, then present the system share sheet so the user can
     // AirDrop / Mail / save-to-Files the .json.
     val url = NSURL.fileURLWithPath(NSTemporaryDirectory() + fileName)
